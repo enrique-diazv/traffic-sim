@@ -1,0 +1,30 @@
+# CMake build directories
+/build/
+/out/
+
+# CMake-generated files
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+cmake_install.cmake
+compile_commands.json
+
+# Compiler and linker artifacts
+*.obj
+*.exe
+*.ilk
+*.pdb
+*.lib
+*.exp
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Visual Studio Code local state
+.vscode/
+
+# Operating system files
+Thumbs.db
+.DS_Store
