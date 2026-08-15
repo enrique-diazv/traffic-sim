@@ -14,10 +14,13 @@ function(trafficsim_set_warnings targetName)
 	endif()
 endfunction()
 
-add_library(trafficsim_core
-	src/network/Intersection.cpp
-	src/network/Road.cpp
-	src/network/RoadNetwork.cpp
+add_library(
+    trafficsim_core
+    src/network/Intersection.cpp
+    src/network/Road.cpp
+    src/network/RoadNetwork.cpp
+    src/routing/DijkstraRoutePlanner.cpp
+    src/routing/Route.cpp
 )
 
 target_include_directories(trafficsim_core
@@ -56,12 +59,15 @@ if(BUILD_TESTING)
 
 	FetchContent_MakeAvailable(googletest)
 
-	add_executable(trafficsim_tests
-		tests/unit/IntersectionTests.cpp
-		tests/unit/ProjectSetupTests.cpp
-		tests/unit/RoadNetworkTests.cpp
-		tests/unit/RoadTests.cpp
-	)
+	add_executable(
+    trafficsim_tests
+    tests/unit/DijkstraRoutePlannerTests.cpp
+    tests/unit/IntersectionTests.cpp
+    tests/unit/ProjectSetupTests.cpp
+    tests/unit/RoadNetworkTests.cpp
+    tests/unit/RoadTests.cpp
+    tests/unit/RouteTests.cpp
+)
 
 	target_link_libraries(trafficsim_tests
 		PRIVATE
