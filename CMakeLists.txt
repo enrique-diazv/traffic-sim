@@ -16,6 +16,7 @@ endfunction()
 
 add_library(trafficsim_core
 	src/core/RandomGenerator.cpp
+	src/core/Simulation.cpp
 	src/core/SimulationClock.cpp
 	src/core/SimulationConfig.cpp
 	src/network/Intersection.cpp
@@ -24,6 +25,8 @@ add_library(trafficsim_core
 	src/routing/DijkstraRoutePlanner.cpp
 	src/routing/Route.cpp
 	src/vehicles/Vehicle.cpp
+	src/vehicles/VehicleManager.cpp
+	src/vehicles/VehicleSpawner.cpp
 )
 
 target_include_directories(trafficsim_core
@@ -72,7 +75,10 @@ if(BUILD_TESTING)
 		tests/unit/RouteTests.cpp
 		tests/unit/SimulationClockTests.cpp
 		tests/unit/SimulationConfigTests.cpp
+		tests/unit/SimulationTests.cpp
+		tests/unit/VehicleManagerTests.cpp
 		tests/unit/VehicleMovementTests.cpp
+		tests/unit/VehicleSpawnerTests.cpp
 		tests/unit/VehicleTests.cpp
 	)
 

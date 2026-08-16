@@ -8,7 +8,7 @@ namespace trafficsim
 
 using VehicleId = std::uint64_t;
 
-enum class VehicleState
+enum class VehicleState : std::uint8_t
 {
     Spawning,
     Driving,

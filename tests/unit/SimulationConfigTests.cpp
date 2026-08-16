@@ -73,8 +73,7 @@ TEST(SimulationConfigTests, RejectsInvalidReactionTime)
     config.reactionTimeSeconds = 0.0;
     EXPECT_THROW(config.validate(), std::invalid_argument);
 
-    config.reactionTimeSeconds =
-        std::numeric_limits<double>::quiet_NaN();
+    config.reactionTimeSeconds = std::numeric_limits<double>::quiet_NaN();
     EXPECT_THROW(config.validate(), std::invalid_argument);
 }
 

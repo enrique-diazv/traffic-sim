@@ -47,14 +47,9 @@ TEST(SimulationClockTests, RejectsInvalidTimeStep)
 {
     EXPECT_THROW((SimulationClock{0.0}), std::invalid_argument);
     EXPECT_THROW((SimulationClock{-1.0}), std::invalid_argument);
-    EXPECT_THROW(
-        (SimulationClock{std::numeric_limits<double>::infinity()}),
-        std::invalid_argument
-    );
-    EXPECT_THROW(
-        (SimulationClock{std::numeric_limits<double>::quiet_NaN()}),
-        std::invalid_argument
-    );
+    EXPECT_THROW((SimulationClock{std::numeric_limits<double>::infinity()}), std::invalid_argument);
+    EXPECT_THROW((SimulationClock{std::numeric_limits<double>::quiet_NaN()}),
+                 std::invalid_argument);
 }
 
 } // namespace

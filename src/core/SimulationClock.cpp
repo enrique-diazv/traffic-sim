@@ -7,14 +7,11 @@
 namespace trafficsim
 {
 
-SimulationClock::SimulationClock(double timeStepSeconds)
-    : timeStepSeconds_{timeStepSeconds}
+SimulationClock::SimulationClock(double timeStepSeconds) : timeStepSeconds_{timeStepSeconds}
 {
     if (!std::isfinite(timeStepSeconds_) || timeStepSeconds_ <= 0.0)
     {
-        throw std::invalid_argument{
-            "Simulation clock time step must be finite and positive"
-        };
+        throw std::invalid_argument{"Simulation clock time step must be finite and positive"};
     }
 }
 

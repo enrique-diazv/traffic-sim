@@ -1,0 +1,87 @@
+#include "trafficsim/core/Simulation.h"
+
+#include <stdexcept>
+#include <utility>
+
+namespace trafficsim
+{
+
+Simulation::Simulation(SimulationConfig config, RoadNetwork network,
+                       std::vector<VehicleSpawnRequest> spawnSchedule)
+    : config_{config}, roadNetwork_{std::move(network)}, clock_{config_.timeStepSeconds},
+      vehicleManager_{config_.maximumVehicles},
+      vehicleSpawner_{std::move(spawnSchedule), config_.defaultVehicleDynamics}
+{
+    config_.validate();
+}
+
+void Simulation::step()
+{
+    if (finished())
+    {
+        throw std::logic_error{"Cannot step a finished simulation"};
+    }
+
+    totalSpawnedVehicles_ += vehicleSpawner_.spawnDue(clock_.currentTimeSeconds(), roadNetwork_,
+                                                      routePlanner_, vehicleManager_);
+
+    vehicleManager_.update(config_.timeStepSeconds, roadNetwork_);
+
+    totalArrivedVehicles_ += vehicleManager_.removeArrived();
+
+    clock_.advance();
+}
+
+void Simulation::run()
+{
+    while (!finished())
+    {
+        step();
+    }
+}
+
+void Simulation::reset() noexcept
+{
+    clock_.reset();
+    vehicleManager_.clear();
+    vehicleSpawner_.reset();
+    totalSpawnedVehicles_ = 0;
+    totalArrivedVehicles_ = 0;
+}
+
+bool Simulation::finished() const noexcept
+{
+    return clock_.currentTimeSeconds() >= config_.durationSeconds;
+}
+
+const SimulationConfig &Simulation::config() const noexcept
+{
+    return config_;
+}
+
+const SimulationClock &Simulation::clock() const noexcept
+{
+    return clock_;
+}
+
+const RoadNetwork &Simulation::roadNetwork() const noexcept
+{
+    return roadNetwork_;
+}
+
+const VehicleManager &Simulation::vehicleManager() const noexcept
+{
+    return vehicleManager_;
+}
+
+std::size_t Simulation::totalSpawnedVehicles() const noexcept
+{
+    return totalSpawnedVehicles_;
+}
+
+std::size_t Simulation::totalArrivedVehicles() const noexcept
+{
+    return totalArrivedVehicles_;
+}
+
+} // namespace trafficsim

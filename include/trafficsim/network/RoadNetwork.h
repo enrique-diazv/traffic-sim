@@ -12,6 +12,9 @@
 namespace trafficsim
 {
 
+// MSVC's std::unordered_map move constructor may allocate and throw.
+// Propagating that exception is safer than forcing a noexcept move.
+// NOLINTNEXTLINE(bugprone-exception-escape)
 class RoadNetwork final
 {
   public:
