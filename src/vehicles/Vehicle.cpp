@@ -85,12 +85,17 @@ void validateRoute(const RoadNetwork &network, IntersectionId origin, Intersecti
 
 } // namespace
 
+void VehicleDynamics::validate() const
+{
+    validateDynamics(*this);
+}
+
 Vehicle::Vehicle(VehicleId vehicleId, IntersectionId origin, IntersectionId destination,
                  Route route, VehicleDynamics dynamics)
     : id_{vehicleId}, origin_{origin}, destination_{destination}, route_{std::move(route)},
       dynamics_{dynamics}
 {
-    validateDynamics(dynamics_);
+    dynamics_.validate();
 }
 
 VehicleId Vehicle::id() const noexcept

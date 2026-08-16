@@ -23,6 +23,8 @@ struct VehicleDynamics
     double maximumSpeedMetersPerSecond;
     double accelerationMetersPerSecondSquared;
     double decelerationMetersPerSecondSquared;
+
+    void validate() const;
 };
 
 } // namespace trafficsim

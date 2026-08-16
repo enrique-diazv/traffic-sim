@@ -15,6 +15,9 @@ function(trafficsim_set_warnings targetName)
 endfunction()
 
 add_library(trafficsim_core
+	src/core/RandomGenerator.cpp
+	src/core/SimulationClock.cpp
+	src/core/SimulationConfig.cpp
 	src/network/Intersection.cpp
 	src/network/Road.cpp
 	src/network/RoadNetwork.cpp
@@ -63,9 +66,12 @@ if(BUILD_TESTING)
 		tests/unit/DijkstraRoutePlannerTests.cpp
 		tests/unit/IntersectionTests.cpp
 		tests/unit/ProjectSetupTests.cpp
+		tests/unit/RandomGeneratorTests.cpp
 		tests/unit/RoadNetworkTests.cpp
 		tests/unit/RoadTests.cpp
 		tests/unit/RouteTests.cpp
+		tests/unit/SimulationClockTests.cpp
+		tests/unit/SimulationConfigTests.cpp
 		tests/unit/VehicleMovementTests.cpp
 		tests/unit/VehicleTests.cpp
 	)
