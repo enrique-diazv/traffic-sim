@@ -5,6 +5,7 @@
 #include "trafficsim/core/SimulationConfig.h"
 #include "trafficsim/network/RoadNetwork.h"
 #include "trafficsim/routing/DijkstraRoutePlanner.h"
+#include "trafficsim/traffic/TrafficManager.h"
 #include "trafficsim/vehicles/VehicleManager.h"
 #include "trafficsim/vehicles/VehicleSpawner.h"
 
@@ -18,7 +19,7 @@ class Simulation final
 {
   public:
     Simulation(SimulationConfig config, RoadNetwork network,
-               std::vector<VehicleSpawnRequest> spawnSchedule);
+               std::vector<VehicleSpawnRequest> spawnSchedule, TrafficManager trafficManager = {});
 
     void step();
     void run();
@@ -29,6 +30,7 @@ class Simulation final
     [[nodiscard]] const SimulationConfig &config() const noexcept;
     [[nodiscard]] const SimulationClock &clock() const noexcept;
     [[nodiscard]] const RoadNetwork &roadNetwork() const noexcept;
+    [[nodiscard]] const TrafficManager &trafficManager() const noexcept;
     [[nodiscard]] const VehicleManager &vehicleManager() const noexcept;
 
     [[nodiscard]] std::size_t totalSpawnedVehicles() const noexcept;
@@ -39,6 +41,7 @@ class Simulation final
     RoadNetwork roadNetwork_;
     SimulationClock clock_;
     DijkstraRoutePlanner routePlanner_;
+    TrafficManager trafficManager_;
     VehicleManager vehicleManager_;
     VehicleSpawner vehicleSpawner_;
     std::size_t totalSpawnedVehicles_{};

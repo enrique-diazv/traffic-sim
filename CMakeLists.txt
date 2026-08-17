@@ -24,6 +24,9 @@ add_library(trafficsim_core
 	src/network/RoadNetwork.cpp
 	src/routing/DijkstraRoutePlanner.cpp
 	src/routing/Route.cpp
+	src/traffic/TrafficLight.cpp
+	src/traffic/TrafficLightController.cpp
+	src/traffic/TrafficManager.cpp
 	src/vehicles/Vehicle.cpp
 	src/vehicles/VehicleManager.cpp
 	src/vehicles/VehicleSpawner.cpp
@@ -76,10 +79,14 @@ if(BUILD_TESTING)
 		tests/unit/SimulationClockTests.cpp
 		tests/unit/SimulationConfigTests.cpp
 		tests/unit/SimulationTests.cpp
+		tests/unit/TrafficLightControllerTests.cpp
+		tests/unit/TrafficLightTests.cpp
+		tests/unit/TrafficManagerTests.cpp
 		tests/unit/VehicleManagerTests.cpp
 		tests/unit/VehicleMovementTests.cpp
 		tests/unit/VehicleSpawnerTests.cpp
 		tests/unit/VehicleTests.cpp
+		tests/unit/VehicleTrafficLightTests.cpp
 	)
 
 	target_link_libraries(trafficsim_tests

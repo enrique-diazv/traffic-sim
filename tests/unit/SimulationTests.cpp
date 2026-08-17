@@ -1,8 +1,10 @@
 #include "trafficsim/core/Simulation.h"
+#include "trafficsim/traffic/TrafficManager.h"
 
 #include <gtest/gtest.h>
 
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace
@@ -14,8 +16,14 @@ using trafficsim::RoadNetwork;
 using trafficsim::RoadProperties;
 using trafficsim::Simulation;
 using trafficsim::SimulationConfig;
+using trafficsim::TrafficLight;
+using trafficsim::TrafficLightController;
+using trafficsim::TrafficLightState;
+using trafficsim::TrafficLightTimings;
+using trafficsim::TrafficManager;
 using trafficsim::VehicleDynamics;
 using trafficsim::VehicleSpawnRequest;
+using trafficsim::VehicleState;
 
 RoadNetwork createNetwork(double roadLengthMeters)
 {
@@ -53,6 +61,26 @@ SimulationConfig createConfig(double durationSeconds, double timeStepSeconds)
     };
 
     return config;
+}
+
+TrafficManager createRedTrafficManager(const RoadNetwork &network)
+{
+    TrafficLightController controller{2};
+
+    controller.addLight(network, 10,
+                        TrafficLight{
+                            TrafficLightTimings{
+                                .greenSeconds = 10.0,
+                                .yellowSeconds = 2.0,
+                                .redSeconds = 2.0,
+                            },
+                            TrafficLightState::Red,
+                        });
+
+    TrafficManager manager;
+    manager.addController(network, std::move(controller));
+
+    return manager;
 }
 
 TEST(SimulationTests, StartsWithEmptyDeterministicState)
@@ -177,6 +205,64 @@ TEST(SimulationTests, SameInputsProduceSameState)
     EXPECT_EQ(first.clock().tickCount(), second.clock().tickCount());
     EXPECT_DOUBLE_EQ(firstVehicle.speedMetersPerSecond(), secondVehicle.speedMetersPerSecond());
     EXPECT_DOUBLE_EQ(firstVehicle.positionMeters(), secondVehicle.positionMeters());
+}
+
+TEST(SimulationTests, UsesCurrentSignalStateBeforeAdvancingTrafficLights)
+{
+    auto network = createNetwork(10.0);
+    auto trafficManager = createRedTrafficManager(network);
+
+    Simulation simulation{
+        createConfig(3.0, 1.0),
+        std::move(network),
+        {
+            {0.0, 1, 2},
+        },
+        std::move(trafficManager),
+    };
+
+    simulation.step();
+
+    EXPECT_EQ(simulation.vehicleManager().getVehicle(1).state(), VehicleState::StoppedAtLight);
+    ASSERT_TRUE(simulation.trafficManager().stateForRoad(10).has_value());
+    EXPECT_EQ(*simulation.trafficManager().stateForRoad(10), TrafficLightState::Red);
+
+    simulation.step();
+
+    EXPECT_EQ(simulation.vehicleManager().getVehicle(1).state(), VehicleState::StoppedAtLight);
+    ASSERT_TRUE(simulation.trafficManager().stateForRoad(10).has_value());
+    EXPECT_EQ(*simulation.trafficManager().stateForRoad(10), TrafficLightState::Green);
+
+    simulation.step();
+
+    EXPECT_EQ(simulation.totalSpawnedVehicles(), 1U);
+    EXPECT_EQ(simulation.totalArrivedVehicles(), 1U);
+    EXPECT_TRUE(simulation.vehicleManager().empty());
+}
+
+TEST(SimulationTests, ResetRestoresTrafficLightsToInitialState)
+{
+    auto network = createNetwork(10.0);
+    auto trafficManager = createRedTrafficManager(network);
+
+    Simulation simulation{
+        createConfig(3.0, 1.0),
+        std::move(network),
+        {},
+        std::move(trafficManager),
+    };
+
+    simulation.step();
+    simulation.step();
+
+    ASSERT_TRUE(simulation.trafficManager().stateForRoad(10).has_value());
+    EXPECT_EQ(*simulation.trafficManager().stateForRoad(10), TrafficLightState::Green);
+
+    simulation.reset();
+
+    ASSERT_TRUE(simulation.trafficManager().stateForRoad(10).has_value());
+    EXPECT_EQ(*simulation.trafficManager().stateForRoad(10), TrafficLightState::Red);
+    EXPECT_EQ(simulation.clock().tickCount(), 0U);
 }
 
 } // namespace

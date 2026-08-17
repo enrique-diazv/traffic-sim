@@ -67,11 +67,12 @@ std::span<const Vehicle> VehicleManager::vehicles() const noexcept
     return {vehicles_.data(), vehicles_.size()};
 }
 
-void VehicleManager::update(double deltaSeconds, const RoadNetwork &network)
+void VehicleManager::update(double deltaSeconds, const RoadNetwork &network,
+                            const TrafficManager *trafficManager)
 {
     for (auto &vehicle : vehicles_)
     {
-        vehicle.update(deltaSeconds, network);
+        vehicle.update(deltaSeconds, network, trafficManager);
     }
 }
 

@@ -1,5 +1,7 @@
 #include "trafficsim/vehicles/Vehicle.h"
 
+#include "trafficsim/traffic/TrafficManager.h"
+
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -90,6 +92,8 @@ void VehicleDynamics::validate() const
     validateDynamics(*this);
 }
 
+// Parameter names distinguish domain aliases that currently share convertible storage types.
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 Vehicle::Vehicle(VehicleId vehicleId, IntersectionId origin, IntersectionId destination,
                  Route route, VehicleDynamics dynamics)
     : id_{vehicleId}, origin_{origin}, destination_{destination}, route_{std::move(route)},
@@ -156,51 +160,47 @@ bool Vehicle::start(const RoadNetwork &network)
     return true;
 }
 
-void Vehicle::update(double deltaSeconds, const RoadNetwork &network)
+void Vehicle::resumeFromTrafficLight(const TrafficManager *trafficManager)
 {
-    if (!std::isfinite(deltaSeconds) || deltaSeconds < 0.0)
-    {
-        throw std::invalid_argument{"Vehicle update duration must be finite and non-negative"};
-    }
-
-    if (state_ != VehicleState::Driving || deltaSeconds == 0.0)
+    if (state_ != VehicleState::StoppedAtLight)
     {
         return;
     }
 
-    const auto currentRoadId = route_.currentRoad();
+    const auto stoppedRoadId = route_.currentRoad();
 
-    if (!currentRoadId.has_value())
+    if (!stoppedRoadId.has_value())
     {
-        throw std::logic_error{"Driving vehicle has no current road"};
+        throw std::logic_error{"Vehicle stopped at light has no current road"};
     }
 
-    const auto &road = network.getRoad(*currentRoadId);
-    const auto desiredSpeed =
-        std::min(dynamics_.maximumSpeedMetersPerSecond, road.speedLimitMetersPerSecond());
+    if (trafficManager != nullptr && !trafficManager->allowsEntry(*stoppedRoadId))
+    {
+        return;
+    }
 
+    state_ = VehicleState::Driving;
+}
+
+void Vehicle::updateSpeed(double desiredSpeed, double deltaSeconds) noexcept
+{
     if (speedMetersPerSecond_ < desiredSpeed)
     {
-        speedMetersPerSecond_ =
-            std::min(desiredSpeed, speedMetersPerSecond_ +
-                                       dynamics_.accelerationMetersPerSecondSquared * deltaSeconds);
+        speedMetersPerSecond_ = std::min(
+            desiredSpeed,
+            speedMetersPerSecond_ + (dynamics_.accelerationMetersPerSecondSquared * deltaSeconds));
     }
     else if (speedMetersPerSecond_ > desiredSpeed)
     {
-        speedMetersPerSecond_ =
-            std::max(desiredSpeed, speedMetersPerSecond_ -
-                                       dynamics_.decelerationMetersPerSecondSquared * deltaSeconds);
+        speedMetersPerSecond_ = std::max(
+            desiredSpeed,
+            speedMetersPerSecond_ - (dynamics_.decelerationMetersPerSecondSquared * deltaSeconds));
     }
+}
 
-    const auto traveledDistance = speedMetersPerSecond_ * deltaSeconds;
-
-    if (!std::isfinite(traveledDistance))
-    {
-        throw std::overflow_error{"Vehicle traveled distance overflow"};
-    }
-
-    positionMeters_ += traveledDistance;
-
+void Vehicle::advanceAcrossCompletedRoads(const RoadNetwork &network,
+                                          const TrafficManager *trafficManager)
+{
     while (state_ == VehicleState::Driving)
     {
         const auto activeRoadId = route_.currentRoad();
@@ -214,6 +214,14 @@ void Vehicle::update(double deltaSeconds, const RoadNetwork &network)
 
         if (positionMeters_ < activeRoad.lengthMeters())
         {
+            break;
+        }
+
+        if (trafficManager != nullptr && !trafficManager->allowsEntry(*activeRoadId))
+        {
+            positionMeters_ = activeRoad.lengthMeters();
+            speedMetersPerSecond_ = 0.0;
+            state_ = VehicleState::StoppedAtLight;
             break;
         }
 
@@ -231,6 +239,46 @@ void Vehicle::update(double deltaSeconds, const RoadNetwork &network)
             speedMetersPerSecond_ = 0.0;
         }
     }
+}
+
+void Vehicle::update(double deltaSeconds, const RoadNetwork &network,
+                     const TrafficManager *trafficManager)
+{
+    if (!std::isfinite(deltaSeconds) || deltaSeconds < 0.0)
+    {
+        throw std::invalid_argument{"Vehicle update duration must be finite and non-negative"};
+    }
+
+    resumeFromTrafficLight(trafficManager);
+
+    if (state_ != VehicleState::Driving || deltaSeconds == 0.0)
+    {
+        return;
+    }
+
+    const auto currentRoadId = route_.currentRoad();
+
+    if (!currentRoadId.has_value())
+    {
+        throw std::logic_error{"Driving vehicle has no current road"};
+    }
+
+    const auto &road = network.getRoad(*currentRoadId);
+    const auto desiredSpeed =
+        std::min(dynamics_.maximumSpeedMetersPerSecond, road.speedLimitMetersPerSecond());
+
+    updateSpeed(desiredSpeed, deltaSeconds);
+
+    const auto traveledDistance = speedMetersPerSecond_ * deltaSeconds;
+
+    if (!std::isfinite(traveledDistance))
+    {
+        throw std::overflow_error{"Vehicle traveled distance overflow"};
+    }
+
+    positionMeters_ += traveledDistance;
+
+    advanceAcrossCompletedRoads(network, trafficManager);
 }
 
 } // namespace trafficsim

@@ -10,6 +10,8 @@
 namespace trafficsim
 {
 
+class TrafficManager;
+
 class Vehicle final
 {
   public:
@@ -29,9 +31,15 @@ class Vehicle final
     [[nodiscard]] double maximumSpeedMetersPerSecond() const noexcept;
 
     [[nodiscard]] bool start(const RoadNetwork &network);
-    void update(double deltaSeconds, const RoadNetwork &network);
+    void update(double deltaSeconds, const RoadNetwork &network,
+                const TrafficManager *trafficManager = nullptr);
 
   private:
+    void resumeFromTrafficLight(const TrafficManager *trafficManager);
+    void updateSpeed(double desiredSpeed, double deltaSeconds) noexcept;
+    void advanceAcrossCompletedRoads(const RoadNetwork &network,
+                                     const TrafficManager *trafficManager);
+
     VehicleId id_;
     IntersectionId origin_;
     IntersectionId destination_;

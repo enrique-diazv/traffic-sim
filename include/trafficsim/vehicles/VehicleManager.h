@@ -10,6 +10,8 @@
 namespace trafficsim
 {
 
+class TrafficManager;
+
 class VehicleManager final
 {
   public:
@@ -24,7 +26,8 @@ class VehicleManager final
 
     [[nodiscard]] std::span<const Vehicle> vehicles() const noexcept;
 
-    void update(double deltaSeconds, const RoadNetwork &network);
+    void update(double deltaSeconds, const RoadNetwork &network,
+                const TrafficManager *trafficManager = nullptr);
     [[nodiscard]] std::size_t removeArrived();
     void clear() noexcept;
 

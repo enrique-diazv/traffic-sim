@@ -7,9 +7,10 @@ namespace trafficsim
 {
 
 Simulation::Simulation(SimulationConfig config, RoadNetwork network,
-                       std::vector<VehicleSpawnRequest> spawnSchedule)
+                       std::vector<VehicleSpawnRequest> spawnSchedule,
+                       TrafficManager trafficManager)
     : config_{config}, roadNetwork_{std::move(network)}, clock_{config_.timeStepSeconds},
-      vehicleManager_{config_.maximumVehicles},
+      trafficManager_{std::move(trafficManager)}, vehicleManager_{config_.maximumVehicles},
       vehicleSpawner_{std::move(spawnSchedule), config_.defaultVehicleDynamics}
 {
     config_.validate();
@@ -25,10 +26,11 @@ void Simulation::step()
     totalSpawnedVehicles_ += vehicleSpawner_.spawnDue(clock_.currentTimeSeconds(), roadNetwork_,
                                                       routePlanner_, vehicleManager_);
 
-    vehicleManager_.update(config_.timeStepSeconds, roadNetwork_);
+    vehicleManager_.update(config_.timeStepSeconds, roadNetwork_, &trafficManager_);
 
     totalArrivedVehicles_ += vehicleManager_.removeArrived();
 
+    trafficManager_.update(config_.timeStepSeconds);
     clock_.advance();
 }
 
@@ -43,6 +45,7 @@ void Simulation::run()
 void Simulation::reset() noexcept
 {
     clock_.reset();
+    trafficManager_.reset();
     vehicleManager_.clear();
     vehicleSpawner_.reset();
     totalSpawnedVehicles_ = 0;
@@ -67,6 +70,11 @@ const SimulationClock &Simulation::clock() const noexcept
 const RoadNetwork &Simulation::roadNetwork() const noexcept
 {
     return roadNetwork_;
+}
+
+const TrafficManager &Simulation::trafficManager() const noexcept
+{
+    return trafficManager_;
 }
 
 const VehicleManager &Simulation::vehicleManager() const noexcept
