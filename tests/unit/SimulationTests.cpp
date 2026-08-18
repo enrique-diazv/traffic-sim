@@ -100,6 +100,22 @@ TEST(SimulationTests, StartsWithEmptyDeterministicState)
     EXPECT_EQ(simulation.roadNetwork().roadCount(), 1U);
 }
 
+TEST(SimulationTests, PassesFollowingConfigurationToVehicleManager)
+{
+    auto config = createConfig(1.0, 0.1);
+    config.minimumFollowingDistanceMeters = 4.0;
+    config.reactionTimeSeconds = 1.5;
+
+    const Simulation simulation{
+        config,
+        createNetwork(100.0),
+        {},
+    };
+
+    EXPECT_DOUBLE_EQ(simulation.vehicleManager().followingConfig().minimumDistanceMeters, 4.0);
+    EXPECT_DOUBLE_EQ(simulation.vehicleManager().followingConfig().reactionTimeSeconds, 1.5);
+}
+
 TEST(SimulationTests, StepSpawnsUpdatesAndAdvancesClock)
 {
     Simulation simulation{
@@ -181,10 +197,39 @@ TEST(SimulationTests, RejectsStepsAfterConfiguredDuration)
     EXPECT_THROW(simulation.step(), std::logic_error);
 }
 
+TEST(SimulationTests, QueuesVehiclesSpawnedOnTheSameRoad)
+{
+    Simulation simulation{
+        createConfig(1.0, 1.0),
+        createNetwork(100.0),
+        {
+            {0.0, 1, 2},
+            {0.0, 1, 2},
+        },
+    };
+
+    simulation.step();
+
+    ASSERT_EQ(simulation.totalSpawnedVehicles(), 2U);
+
+    const auto &leader = simulation.vehicleManager().getVehicle(1);
+    const auto &follower = simulation.vehicleManager().getVehicle(2);
+
+    EXPECT_EQ(leader.state(), VehicleState::Driving);
+    EXPECT_DOUBLE_EQ(leader.positionMeters(), 10.0);
+
+    EXPECT_EQ(follower.state(), VehicleState::Waiting);
+    EXPECT_DOUBLE_EQ(follower.positionMeters(), 8.0);
+
+    EXPECT_DOUBLE_EQ(leader.positionMeters() - follower.positionMeters(),
+                     simulation.config().minimumFollowingDistanceMeters);
+}
+
 TEST(SimulationTests, SameInputsProduceSameState)
 {
     const auto config = createConfig(1.0, 0.1);
     const std::vector<VehicleSpawnRequest> schedule{
+        {0.0, 1, 2},
         {0.0, 1, 2},
     };
 
@@ -201,10 +246,15 @@ TEST(SimulationTests, SameInputsProduceSameState)
 
     const auto &firstVehicle = first.vehicleManager().getVehicle(1);
     const auto &secondVehicle = second.vehicleManager().getVehicle(1);
+    const auto &firstFollower = first.vehicleManager().getVehicle(2);
+    const auto &secondFollower = second.vehicleManager().getVehicle(2);
 
     EXPECT_EQ(first.clock().tickCount(), second.clock().tickCount());
     EXPECT_DOUBLE_EQ(firstVehicle.speedMetersPerSecond(), secondVehicle.speedMetersPerSecond());
     EXPECT_DOUBLE_EQ(firstVehicle.positionMeters(), secondVehicle.positionMeters());
+    EXPECT_EQ(firstFollower.state(), secondFollower.state());
+    EXPECT_DOUBLE_EQ(firstFollower.speedMetersPerSecond(), secondFollower.speedMetersPerSecond());
+    EXPECT_DOUBLE_EQ(firstFollower.positionMeters(), secondFollower.positionMeters());
 }
 
 TEST(SimulationTests, UsesCurrentSignalStateBeforeAdvancingTrafficLights)

@@ -15,7 +15,8 @@ class TrafficManager;
 class VehicleManager final
 {
   public:
-    explicit VehicleManager(std::size_t maximumVehicles);
+    explicit VehicleManager(std::size_t maximumVehicles,
+                            VehicleFollowingConfig followingConfig = {});
 
     void addVehicle(Vehicle vehicle);
 
@@ -33,12 +34,14 @@ class VehicleManager final
 
     [[nodiscard]] std::size_t vehicleCount() const noexcept;
     [[nodiscard]] std::size_t maximumVehicles() const noexcept;
+    [[nodiscard]] const VehicleFollowingConfig &followingConfig() const noexcept;
     [[nodiscard]] bool empty() const noexcept;
     [[nodiscard]] bool full() const noexcept;
 
   private:
     std::vector<Vehicle> vehicles_;
     std::size_t maximumVehicles_;
+    VehicleFollowingConfig followingConfig_;
 };
 
 } // namespace trafficsim

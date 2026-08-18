@@ -1,5 +1,6 @@
 #include "trafficsim/traffic/TrafficManager.h"
 #include "trafficsim/vehicles/Vehicle.h"
+#include "trafficsim/vehicles/VehicleManager.h"
 
 #include <gtest/gtest.h>
 
@@ -20,6 +21,7 @@ using trafficsim::TrafficLightTimings;
 using trafficsim::TrafficManager;
 using trafficsim::Vehicle;
 using trafficsim::VehicleDynamics;
+using trafficsim::VehicleManager;
 using trafficsim::VehicleState;
 
 constexpr TrafficLightTimings testTimings()
@@ -142,6 +144,50 @@ TEST(VehicleTrafficLightTests, ResumesAndArrivesWhenLightTurnsGreen)
     EXPECT_FALSE(vehicle.currentRoad().has_value());
     EXPECT_DOUBLE_EQ(vehicle.positionMeters(), 0.0);
     EXPECT_DOUBLE_EQ(vehicle.speedMetersPerSecond(), 0.0);
+}
+
+TEST(VehicleTrafficLightTests, QueuesVehiclesBehindRedLight)
+{
+    const auto network = createNetwork();
+    auto trafficManager = createRedTrafficManager(network);
+    VehicleManager vehicleManager{2};
+
+    vehicleManager.addVehicle(Vehicle{
+        100,
+        1,
+        2,
+        Route{{10}, 10.0},
+        testDynamics(),
+    });
+    vehicleManager.addVehicle(Vehicle{
+        200,
+        1,
+        2,
+        Route{{10}, 10.0},
+        testDynamics(),
+    });
+
+    ASSERT_TRUE(vehicleManager.getVehicle(100).start(network));
+    ASSERT_TRUE(vehicleManager.getVehicle(200).start(network));
+
+    vehicleManager.update(1.0, network, &trafficManager);
+
+    const auto &leaderAtRed = vehicleManager.getVehicle(100);
+    const auto &followerAtRed = vehicleManager.getVehicle(200);
+
+    EXPECT_EQ(leaderAtRed.state(), VehicleState::StoppedAtLight);
+    EXPECT_DOUBLE_EQ(leaderAtRed.positionMeters(), 10.0);
+
+    EXPECT_EQ(followerAtRed.state(), VehicleState::Waiting);
+    EXPECT_DOUBLE_EQ(followerAtRed.positionMeters(), 8.0);
+    EXPECT_DOUBLE_EQ(followerAtRed.speedMetersPerSecond(), 0.0);
+
+    trafficManager.update(2.0);
+    vehicleManager.update(0.1, network, &trafficManager);
+
+    EXPECT_EQ(vehicleManager.getVehicle(100).state(), VehicleState::Arrived);
+    EXPECT_EQ(vehicleManager.getVehicle(200).state(), VehicleState::Driving);
+    EXPECT_DOUBLE_EQ(vehicleManager.getVehicle(200).positionMeters(), 8.1);
 }
 
 } // namespace

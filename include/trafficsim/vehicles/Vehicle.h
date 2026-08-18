@@ -32,11 +32,14 @@ class Vehicle final
 
     [[nodiscard]] bool start(const RoadNetwork &network);
     void update(double deltaSeconds, const RoadNetwork &network,
-                const TrafficManager *trafficManager = nullptr);
+                const TrafficManager *trafficManager = nullptr,
+                const VehicleFollowingConstraint *followingConstraint = nullptr);
 
   private:
     void resumeFromTrafficLight(const TrafficManager *trafficManager);
+    void resumeFromQueue(const VehicleFollowingConstraint *followingConstraint);
     void updateSpeed(double desiredSpeed, double deltaSeconds) noexcept;
+    void applyFollowingConstraint(const VehicleFollowingConstraint *followingConstraint);
     void advanceAcrossCompletedRoads(const RoadNetwork &network,
                                      const TrafficManager *trafficManager);
 

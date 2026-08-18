@@ -92,6 +92,33 @@ void VehicleDynamics::validate() const
     validateDynamics(*this);
 }
 
+void VehicleFollowingConfig::validate() const
+{
+    if (!std::isfinite(minimumDistanceMeters) || minimumDistanceMeters < 0.0)
+    {
+        throw std::invalid_argument{"Minimum following distance must be finite and non-negative"};
+    }
+
+    if (!std::isfinite(reactionTimeSeconds) || reactionTimeSeconds <= 0.0)
+    {
+        throw std::invalid_argument{"Reaction time must be finite and positive"};
+    }
+}
+
+void VehicleFollowingConstraint::validate(double currentPositionMeters) const
+{
+    if (!std::isfinite(maximumPositionMeters) || maximumPositionMeters < currentPositionMeters)
+    {
+        throw std::invalid_argument{
+            "Following maximum position must be finite and not behind the vehicle"};
+    }
+
+    if (!std::isfinite(desiredSpeedLimitMetersPerSecond) || desiredSpeedLimitMetersPerSecond < 0.0)
+    {
+        throw std::invalid_argument{"Following speed limit must be finite and non-negative"};
+    }
+}
+
 // Parameter names distinguish domain aliases that currently share convertible storage types.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 Vehicle::Vehicle(VehicleId vehicleId, IntersectionId origin, IntersectionId destination,
@@ -182,6 +209,22 @@ void Vehicle::resumeFromTrafficLight(const TrafficManager *trafficManager)
     state_ = VehicleState::Driving;
 }
 
+void Vehicle::resumeFromQueue(const VehicleFollowingConstraint *followingConstraint)
+{
+    if (state_ != VehicleState::Waiting)
+    {
+        return;
+    }
+
+    if (followingConstraint != nullptr &&
+        followingConstraint->maximumPositionMeters <= positionMeters_)
+    {
+        return;
+    }
+
+    state_ = VehicleState::Driving;
+}
+
 void Vehicle::updateSpeed(double desiredSpeed, double deltaSeconds) noexcept
 {
     if (speedMetersPerSecond_ < desiredSpeed)
@@ -196,6 +239,19 @@ void Vehicle::updateSpeed(double desiredSpeed, double deltaSeconds) noexcept
             desiredSpeed,
             speedMetersPerSecond_ - (dynamics_.decelerationMetersPerSecondSquared * deltaSeconds));
     }
+}
+
+void Vehicle::applyFollowingConstraint(const VehicleFollowingConstraint *followingConstraint)
+{
+    if (followingConstraint == nullptr ||
+        positionMeters_ < followingConstraint->maximumPositionMeters)
+    {
+        return;
+    }
+
+    positionMeters_ = followingConstraint->maximumPositionMeters;
+    speedMetersPerSecond_ = 0.0;
+    state_ = VehicleState::Waiting;
 }
 
 void Vehicle::advanceAcrossCompletedRoads(const RoadNetwork &network,
@@ -242,14 +298,21 @@ void Vehicle::advanceAcrossCompletedRoads(const RoadNetwork &network,
 }
 
 void Vehicle::update(double deltaSeconds, const RoadNetwork &network,
-                     const TrafficManager *trafficManager)
+                     const TrafficManager *trafficManager,
+                     const VehicleFollowingConstraint *followingConstraint)
 {
     if (!std::isfinite(deltaSeconds) || deltaSeconds < 0.0)
     {
         throw std::invalid_argument{"Vehicle update duration must be finite and non-negative"};
     }
 
+    if (followingConstraint != nullptr)
+    {
+        followingConstraint->validate(positionMeters_);
+    }
+
     resumeFromTrafficLight(trafficManager);
+    resumeFromQueue(followingConstraint);
 
     if (state_ != VehicleState::Driving || deltaSeconds == 0.0)
     {
@@ -264,8 +327,14 @@ void Vehicle::update(double deltaSeconds, const RoadNetwork &network,
     }
 
     const auto &road = network.getRoad(*currentRoadId);
-    const auto desiredSpeed =
+    auto desiredSpeed =
         std::min(dynamics_.maximumSpeedMetersPerSecond, road.speedLimitMetersPerSecond());
+
+    if (followingConstraint != nullptr)
+    {
+        desiredSpeed =
+            std::min(desiredSpeed, followingConstraint->desiredSpeedLimitMetersPerSecond);
+    }
 
     updateSpeed(desiredSpeed, deltaSeconds);
 
@@ -278,6 +347,7 @@ void Vehicle::update(double deltaSeconds, const RoadNetwork &network,
 
     positionMeters_ += traveledDistance;
 
+    applyFollowingConstraint(followingConstraint);
     advanceAcrossCompletedRoads(network, trafficManager);
 }
 

@@ -27,6 +27,22 @@ struct VehicleDynamics
     void validate() const;
 };
 
+struct VehicleFollowingConfig
+{
+    double minimumDistanceMeters{2.0};
+    double reactionTimeSeconds{1.0};
+
+    void validate() const;
+};
+
+struct VehicleFollowingConstraint
+{
+    double maximumPositionMeters;
+    double desiredSpeedLimitMetersPerSecond;
+
+    void validate(double currentPositionMeters) const;
+};
+
 } // namespace trafficsim
 
 #endif // TRAFFICSIM_VEHICLES_VEHICLE_TYPES_H

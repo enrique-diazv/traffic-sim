@@ -10,7 +10,14 @@ Simulation::Simulation(SimulationConfig config, RoadNetwork network,
                        std::vector<VehicleSpawnRequest> spawnSchedule,
                        TrafficManager trafficManager)
     : config_{config}, roadNetwork_{std::move(network)}, clock_{config_.timeStepSeconds},
-      trafficManager_{std::move(trafficManager)}, vehicleManager_{config_.maximumVehicles},
+      trafficManager_{std::move(trafficManager)},
+      vehicleManager_{
+          config_.maximumVehicles,
+          VehicleFollowingConfig{
+              .minimumDistanceMeters = config_.minimumFollowingDistanceMeters,
+              .reactionTimeSeconds = config_.reactionTimeSeconds,
+          },
+      },
       vehicleSpawner_{std::move(spawnSchedule), config_.defaultVehicleDynamics}
 {
     config_.validate();

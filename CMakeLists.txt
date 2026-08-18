@@ -82,6 +82,7 @@ if(BUILD_TESTING)
 		tests/unit/TrafficLightControllerTests.cpp
 		tests/unit/TrafficLightTests.cpp
 		tests/unit/TrafficManagerTests.cpp
+		tests/unit/VehicleFollowingTests.cpp
 		tests/unit/VehicleManagerTests.cpp
 		tests/unit/VehicleMovementTests.cpp
 		tests/unit/VehicleSpawnerTests.cpp
