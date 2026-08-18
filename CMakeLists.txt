@@ -6,6 +6,28 @@ project(TrafficSim
 	LANGUAGES CXX
 )
 
+include(FetchContent)
+
+FetchContent_Declare(
+	nlohmann_json
+	URL
+	https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+	URL_HASH
+	SHA256=42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa
+	DOWNLOAD_EXTRACT_TIMESTAMP
+	TRUE
+)
+
+FetchContent_MakeAvailable(nlohmann_json)
+
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/scenarios")
+
+configure_file(
+	"${PROJECT_SOURCE_DIR}/scenarios/basic.json"
+	"${PROJECT_BINARY_DIR}/scenarios/basic.json"
+	COPYONLY
+)
+
 function(trafficsim_set_warnings targetName)
 	if(MSVC)
 		target_compile_options(${targetName} PRIVATE /W4 /permissive-)
@@ -19,6 +41,7 @@ add_library(trafficsim_core
 	src/core/Simulation.cpp
 	src/core/SimulationClock.cpp
 	src/core/SimulationConfig.cpp
+	src/io/ScenarioLoader.cpp
 	src/network/Intersection.cpp
 	src/network/Road.cpp
 	src/network/RoadNetwork.cpp
@@ -39,6 +62,10 @@ target_include_directories(trafficsim_core
 	PUBLIC ${PROJECT_SOURCE_DIR}/include
 )
 
+target_link_libraries(trafficsim_core
+	PRIVATE nlohmann_json::nlohmann_json
+)
+
 target_compile_features(trafficsim_core PUBLIC cxx_std_20)
 
 set_target_properties(trafficsim_core
@@ -57,8 +84,6 @@ trafficsim_set_warnings(trafficsim)
 include(CTest)
 
 if(BUILD_TESTING)
-	include(FetchContent)
-
 	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 	FetchContent_Declare(
@@ -72,6 +97,7 @@ if(BUILD_TESTING)
 	FetchContent_MakeAvailable(googletest)
 
 	add_executable(trafficsim_tests
+		tests/integration/ScenarioSimulationTests.cpp
 		tests/unit/ConsoleReporterTests.cpp
 		tests/unit/CsvExporterTests.cpp
 		tests/unit/DijkstraRoutePlannerTests.cpp
@@ -81,6 +107,7 @@ if(BUILD_TESTING)
 		tests/unit/RoadNetworkTests.cpp
 		tests/unit/RoadTests.cpp
 		tests/unit/RouteTests.cpp
+		tests/unit/ScenarioLoaderTests.cpp
 		tests/unit/SimulationClockTests.cpp
 		tests/unit/SimulationConfigTests.cpp
 		tests/unit/SimulationTests.cpp
