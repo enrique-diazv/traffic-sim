@@ -74,6 +74,10 @@ TEST(VehicleTests, StoresInitialState)
     EXPECT_DOUBLE_EQ(vehicle.positionMeters(), 0.0);
     EXPECT_DOUBLE_EQ(vehicle.speedMetersPerSecond(), 0.0);
     EXPECT_DOUBLE_EQ(vehicle.maximumSpeedMetersPerSecond(), 20.0);
+    EXPECT_FALSE(vehicle.spawnTimeSeconds().has_value());
+    EXPECT_FALSE(vehicle.arrivalTimeSeconds().has_value());
+    EXPECT_FALSE(vehicle.travelTimeSeconds().has_value());
+    EXPECT_DOUBLE_EQ(vehicle.waitingTimeSeconds(), 0.0);
 }
 
 TEST(VehicleTests, StartsOnlyOnce)
@@ -97,9 +101,58 @@ TEST(VehicleTests, EmptyRouteArrivesImmediately)
         100, 1, 1, Route{std::vector<RoadId>{}, 0.0}, defaultDynamics(),
     };
 
-    EXPECT_TRUE(vehicle.start(network));
+    EXPECT_TRUE(vehicle.start(network, 3.5));
     EXPECT_EQ(vehicle.state(), VehicleState::Arrived);
     EXPECT_FALSE(vehicle.currentRoad().has_value());
+
+    ASSERT_TRUE(vehicle.spawnTimeSeconds().has_value());
+    ASSERT_TRUE(vehicle.arrivalTimeSeconds().has_value());
+    ASSERT_TRUE(vehicle.travelTimeSeconds().has_value());
+
+    EXPECT_DOUBLE_EQ(*vehicle.spawnTimeSeconds(), 3.5);
+    EXPECT_DOUBLE_EQ(*vehicle.arrivalTimeSeconds(), 3.5);
+    EXPECT_DOUBLE_EQ(*vehicle.travelTimeSeconds(), 0.0);
+}
+
+TEST(VehicleTests, RecordsTripTimingWhenArriving)
+{
+    const auto network = createLinearNetwork();
+    Vehicle vehicle{
+        100, 1, 3, Route{{10, 20}, 150.0}, defaultDynamics(),
+    };
+
+    ASSERT_TRUE(vehicle.start(network, 12.5));
+
+    ASSERT_TRUE(vehicle.spawnTimeSeconds().has_value());
+    EXPECT_DOUBLE_EQ(*vehicle.spawnTimeSeconds(), 12.5);
+    EXPECT_FALSE(vehicle.arrivalTimeSeconds().has_value());
+    EXPECT_FALSE(vehicle.travelTimeSeconds().has_value());
+
+    vehicle.update(10.0, network);
+
+    EXPECT_EQ(vehicle.state(), VehicleState::Driving);
+    EXPECT_FALSE(vehicle.arrivalTimeSeconds().has_value());
+    EXPECT_FALSE(vehicle.travelTimeSeconds().has_value());
+
+    vehicle.update(10.0, network);
+
+    EXPECT_EQ(vehicle.state(), VehicleState::Arrived);
+    ASSERT_TRUE(vehicle.arrivalTimeSeconds().has_value());
+    ASSERT_TRUE(vehicle.travelTimeSeconds().has_value());
+    EXPECT_DOUBLE_EQ(*vehicle.arrivalTimeSeconds(), 32.5);
+    EXPECT_DOUBLE_EQ(*vehicle.travelTimeSeconds(), 20.0);
+}
+
+TEST(VehicleTests, RejectsInvalidSpawnTimeWithoutStarting)
+{
+    const auto network = createLinearNetwork();
+    Vehicle vehicle{
+        100, 1, 3, Route{{10, 20}, 150.0}, defaultDynamics(),
+    };
+
+    EXPECT_THROW(static_cast<void>(vehicle.start(network, -1.0)), std::invalid_argument);
+    EXPECT_EQ(vehicle.state(), VehicleState::Spawning);
+    EXPECT_FALSE(vehicle.spawnTimeSeconds().has_value());
 }
 
 TEST(VehicleTests, RejectsInvalidDynamics)

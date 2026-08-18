@@ -28,6 +28,7 @@ class RoadNetwork final
     [[nodiscard]] const Road &getRoad(RoadId roadId) const;
 
     [[nodiscard]] std::span<const RoadId> outgoingRoads(IntersectionId intersectionId) const;
+    [[nodiscard]] std::vector<RoadId> roadIds() const;
 
     [[nodiscard]] std::size_t intersectionCount() const noexcept;
     [[nodiscard]] std::size_t roadCount() const noexcept;

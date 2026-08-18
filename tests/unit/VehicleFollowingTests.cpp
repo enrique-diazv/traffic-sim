@@ -111,6 +111,13 @@ TEST(VehicleFollowingTests, ResumesWhenQueueMovesForward)
     vehicle.update(1.0, network, nullptr, &blocked);
     ASSERT_EQ(vehicle.state(), VehicleState::Waiting);
 
+    EXPECT_DOUBLE_EQ(vehicle.waitingTimeSeconds(), 0.0);
+
+    vehicle.update(2.0, network, nullptr, &blocked);
+
+    EXPECT_EQ(vehicle.state(), VehicleState::Waiting);
+    EXPECT_DOUBLE_EQ(vehicle.waitingTimeSeconds(), 2.0);
+
     const VehicleFollowingConstraint advanced{
         .maximumPositionMeters = 8.0,
         .desiredSpeedLimitMetersPerSecond = 10.0,
@@ -121,6 +128,7 @@ TEST(VehicleFollowingTests, ResumesWhenQueueMovesForward)
     EXPECT_EQ(vehicle.state(), VehicleState::Driving);
     EXPECT_DOUBLE_EQ(vehicle.speedMetersPerSecond(), 5.0);
     EXPECT_DOUBLE_EQ(vehicle.positionMeters(), 5.5);
+    EXPECT_DOUBLE_EQ(vehicle.waitingTimeSeconds(), 2.0);
 }
 
 TEST(VehicleFollowingTests, RejectsInvalidConstraintsWithoutMoving)

@@ -1,5 +1,6 @@
 #include "trafficsim/network/RoadNetwork.h"
 
+#include <algorithm>
 #include <stdexcept>
 
 namespace trafficsim
@@ -95,6 +96,21 @@ std::span<const RoadId> RoadNetwork::outgoingRoads(IntersectionId intersectionId
     }
 
     return std::span<const RoadId>{roads->second};
+}
+
+std::vector<RoadId> RoadNetwork::roadIds() const
+{
+    std::vector<RoadId> identifiers;
+    identifiers.reserve(roads_.size());
+
+    for (const auto &[roadId, road] : roads_)
+    {
+        static_cast<void>(road);
+        identifiers.push_back(roadId);
+    }
+
+    std::ranges::sort(identifiers);
+    return identifiers;
 }
 
 std::size_t RoadNetwork::intersectionCount() const noexcept

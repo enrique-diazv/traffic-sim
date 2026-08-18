@@ -30,7 +30,13 @@ class Vehicle final
     [[nodiscard]] double speedMetersPerSecond() const noexcept;
     [[nodiscard]] double maximumSpeedMetersPerSecond() const noexcept;
 
-    [[nodiscard]] bool start(const RoadNetwork &network);
+    [[nodiscard]] std::optional<double> spawnTimeSeconds() const noexcept;
+    [[nodiscard]] std::optional<double> arrivalTimeSeconds() const noexcept;
+    [[nodiscard]] std::optional<double> travelTimeSeconds() const noexcept;
+
+    [[nodiscard]] double waitingTimeSeconds() const noexcept;
+
+    [[nodiscard]] bool start(const RoadNetwork &network, double spawnTimeSeconds = 0.0);
     void update(double deltaSeconds, const RoadNetwork &network,
                 const TrafficManager *trafficManager = nullptr,
                 const VehicleFollowingConstraint *followingConstraint = nullptr);
@@ -51,6 +57,11 @@ class Vehicle final
     VehicleState state_{VehicleState::Spawning};
     double positionMeters_{};
     double speedMetersPerSecond_{};
+
+    std::optional<double> spawnTimeSeconds_;
+    std::optional<double> arrivalTimeSeconds_;
+    double elapsedTravelTimeSeconds_{};
+    double waitingTimeSeconds_{};
 };
 
 } // namespace trafficsim

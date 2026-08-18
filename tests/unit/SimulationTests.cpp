@@ -157,6 +157,37 @@ TEST(SimulationTests, RunUsesFixedStepsAndCountsArrivals)
     EXPECT_EQ(simulation.totalSpawnedVehicles(), 1U);
     EXPECT_EQ(simulation.totalArrivedVehicles(), 1U);
     EXPECT_TRUE(simulation.vehicleManager().empty());
+
+    const auto summary = simulation.statistics().summary();
+
+    EXPECT_EQ(summary.vehiclesSpawned, 1U);
+    EXPECT_EQ(summary.vehiclesArrived, 1U);
+    EXPECT_NEAR(summary.averageTravelTimeSeconds, 0.4, 1.0e-9);
+    EXPECT_NEAR(summary.minimumTravelTimeSeconds, 0.4, 1.0e-9);
+    EXPECT_NEAR(summary.maximumTravelTimeSeconds, 0.4, 1.0e-9);
+    EXPECT_DOUBLE_EQ(summary.averageWaitingTimeSeconds, 0.0);
+    EXPECT_NEAR(summary.averageSpeedMetersPerSecond, 2.5, 1.0e-9);
+    EXPECT_DOUBLE_EQ(summary.totalDistanceMeters, 1.0);
+    EXPECT_DOUBLE_EQ(summary.averageRouteLengthMeters, 1.0);
+    EXPECT_EQ(summary.peakActiveVehicles, 1U);
+
+    const auto results = simulation.statistics().vehicleResults();
+
+    ASSERT_EQ(results.size(), 1U);
+    EXPECT_EQ(results[0].vehicleId, 1U);
+    EXPECT_DOUBLE_EQ(results[0].spawnTimeSeconds, 0.0);
+    EXPECT_NEAR(results[0].arrivalTimeSeconds, 0.4, 1.0e-9);
+    EXPECT_NEAR(results[0].travelTimeSeconds, 0.4, 1.0e-9);
+    EXPECT_DOUBLE_EQ(results[0].distanceMeters, 1.0);
+
+    const auto roadResults = simulation.statistics().roadResults();
+
+    ASSERT_EQ(roadResults.size(), 1U);
+    EXPECT_EQ(roadResults[0].roadId, 10U);
+    EXPECT_NEAR(roadResults[0].averageSpeedMetersPerSecond, 2.0, 1.0e-9);
+    EXPECT_EQ(roadResults[0].peakVehicleCount, 1U);
+    EXPECT_NEAR(roadResults[0].averageOccupancy, 0.015, 1.0e-9);
+    EXPECT_DOUBLE_EQ(roadResults[0].congestionTimeSeconds, 0.0);
 }
 
 TEST(SimulationTests, ResetRestoresInitialStateAndSchedule)
@@ -178,10 +209,24 @@ TEST(SimulationTests, ResetRestoresInitialStateAndSchedule)
     EXPECT_EQ(simulation.totalSpawnedVehicles(), 0U);
     EXPECT_EQ(simulation.totalArrivedVehicles(), 0U);
 
+    const auto resetSummary = simulation.statistics().summary();
+
+    EXPECT_EQ(resetSummary.vehiclesSpawned, 0U);
+    EXPECT_EQ(resetSummary.vehiclesArrived, 0U);
+    EXPECT_EQ(resetSummary.peakActiveVehicles, 0U);
+    EXPECT_TRUE(simulation.statistics().vehicleResults().empty());
+    EXPECT_TRUE(simulation.statistics().roadResults().empty());
+
     simulation.step();
 
     EXPECT_TRUE(simulation.vehicleManager().hasVehicle(1));
     EXPECT_EQ(simulation.totalSpawnedVehicles(), 1U);
+
+    const auto restartedSummary = simulation.statistics().summary();
+
+    EXPECT_EQ(restartedSummary.vehiclesSpawned, 1U);
+    EXPECT_EQ(restartedSummary.vehiclesArrived, 0U);
+    EXPECT_EQ(restartedSummary.peakActiveVehicles, 1U);
 }
 
 TEST(SimulationTests, RejectsStepsAfterConfiguredDuration)

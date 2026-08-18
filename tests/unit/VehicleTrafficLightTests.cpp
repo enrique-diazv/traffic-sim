@@ -113,12 +113,14 @@ TEST(VehicleTrafficLightTests, RemainsStoppedWhileLightIsRed)
 
     vehicle.update(1.0, network, &trafficManager);
     ASSERT_EQ(vehicle.state(), VehicleState::StoppedAtLight);
+    EXPECT_DOUBLE_EQ(vehicle.waitingTimeSeconds(), 0.0);
 
     vehicle.update(1.0, network, &trafficManager);
 
     EXPECT_EQ(vehicle.state(), VehicleState::StoppedAtLight);
     EXPECT_DOUBLE_EQ(vehicle.positionMeters(), 10.0);
     EXPECT_DOUBLE_EQ(vehicle.speedMetersPerSecond(), 0.0);
+    EXPECT_DOUBLE_EQ(vehicle.waitingTimeSeconds(), 1.0);
 }
 
 TEST(VehicleTrafficLightTests, ResumesAndArrivesWhenLightTurnsGreen)

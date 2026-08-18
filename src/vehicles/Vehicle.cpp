@@ -174,16 +174,53 @@ double Vehicle::maximumSpeedMetersPerSecond() const noexcept
     return dynamics_.maximumSpeedMetersPerSecond;
 }
 
-bool Vehicle::start(const RoadNetwork &network)
+std::optional<double> Vehicle::spawnTimeSeconds() const noexcept
+{
+    return spawnTimeSeconds_;
+}
+
+std::optional<double> Vehicle::arrivalTimeSeconds() const noexcept
+{
+    return arrivalTimeSeconds_;
+}
+
+std::optional<double> Vehicle::travelTimeSeconds() const noexcept
+{
+    if (!spawnTimeSeconds_.has_value() || !arrivalTimeSeconds_.has_value())
+    {
+        return std::nullopt;
+    }
+
+    return *arrivalTimeSeconds_ - *spawnTimeSeconds_;
+}
+
+double Vehicle::waitingTimeSeconds() const noexcept
+{
+    return waitingTimeSeconds_;
+}
+
+bool Vehicle::start(const RoadNetwork &network, double spawnTimeSeconds)
 {
     if (state_ != VehicleState::Spawning)
     {
         return false;
     }
 
+    if (!std::isfinite(spawnTimeSeconds) || spawnTimeSeconds < 0.0)
+    {
+        throw std::invalid_argument{"Vehicle spawn time must be finite and non-negative"};
+    }
+
     validateRoute(network, origin_, destination_, route_);
 
+    spawnTimeSeconds_ = spawnTimeSeconds;
     state_ = route_.isComplete() ? VehicleState::Arrived : VehicleState::Driving;
+
+    if (state_ == VehicleState::Arrived)
+    {
+        arrivalTimeSeconds_ = spawnTimeSeconds;
+    }
+
     return true;
 }
 
@@ -291,6 +328,7 @@ void Vehicle::advanceAcrossCompletedRoads(const RoadNetwork &network,
         if (route_.isComplete())
         {
             state_ = VehicleState::Arrived;
+            arrivalTimeSeconds_ = *spawnTimeSeconds_ + elapsedTravelTimeSeconds_;
             positionMeters_ = 0.0;
             speedMetersPerSecond_ = 0.0;
         }
@@ -311,8 +349,41 @@ void Vehicle::update(double deltaSeconds, const RoadNetwork &network,
         followingConstraint->validate(positionMeters_);
     }
 
+    const auto tracksTravelTime =
+        state_ != VehicleState::Spawning && state_ != VehicleState::Arrived;
+
+    if (tracksTravelTime)
+    {
+        if (!spawnTimeSeconds_.has_value())
+        {
+            throw std::logic_error{"Active vehicle has no spawn time"};
+        }
+
+        const auto nextElapsedTravelTime = elapsedTravelTimeSeconds_ + deltaSeconds;
+        const auto nextSimulationTime = *spawnTimeSeconds_ + nextElapsedTravelTime;
+
+        if (!std::isfinite(nextElapsedTravelTime) || !std::isfinite(nextSimulationTime))
+        {
+            throw std::overflow_error{"Vehicle travel time overflow"};
+        }
+
+        elapsedTravelTimeSeconds_ = nextElapsedTravelTime;
+    }
+
     resumeFromTrafficLight(trafficManager);
     resumeFromQueue(followingConstraint);
+
+    if (state_ == VehicleState::Waiting || state_ == VehicleState::StoppedAtLight)
+    {
+        const auto nextWaitingTime = waitingTimeSeconds_ + deltaSeconds;
+
+        if (!std::isfinite(nextWaitingTime))
+        {
+            throw std::overflow_error{"Vehicle waiting time overflow"};
+        }
+
+        waitingTimeSeconds_ = nextWaitingTime;
+    }
 
     if (state_ != VehicleState::Driving || deltaSeconds == 0.0)
     {

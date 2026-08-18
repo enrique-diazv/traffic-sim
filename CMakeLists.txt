@@ -24,6 +24,9 @@ add_library(trafficsim_core
 	src/network/RoadNetwork.cpp
 	src/routing/DijkstraRoutePlanner.cpp
 	src/routing/Route.cpp
+	src/statistics/ConsoleReporter.cpp
+	src/statistics/CsvExporter.cpp
+	src/statistics/StatisticsCollector.cpp
 	src/traffic/TrafficLight.cpp
 	src/traffic/TrafficLightController.cpp
 	src/traffic/TrafficManager.cpp
@@ -69,6 +72,8 @@ if(BUILD_TESTING)
 	FetchContent_MakeAvailable(googletest)
 
 	add_executable(trafficsim_tests
+		tests/unit/ConsoleReporterTests.cpp
+		tests/unit/CsvExporterTests.cpp
 		tests/unit/DijkstraRoutePlannerTests.cpp
 		tests/unit/IntersectionTests.cpp
 		tests/unit/ProjectSetupTests.cpp
@@ -79,6 +84,7 @@ if(BUILD_TESTING)
 		tests/unit/SimulationClockTests.cpp
 		tests/unit/SimulationConfigTests.cpp
 		tests/unit/SimulationTests.cpp
+		tests/unit/StatisticsCollectorTests.cpp
 		tests/unit/TrafficLightControllerTests.cpp
 		tests/unit/TrafficLightTests.cpp
 		tests/unit/TrafficManagerTests.cpp

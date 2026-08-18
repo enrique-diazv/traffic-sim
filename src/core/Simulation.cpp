@@ -30,10 +30,25 @@ void Simulation::step()
         throw std::logic_error{"Cannot step a finished simulation"};
     }
 
-    totalSpawnedVehicles_ += vehicleSpawner_.spawnDue(clock_.currentTimeSeconds(), roadNetwork_,
-                                                      routePlanner_, vehicleManager_);
+    const auto spawnedCount = vehicleSpawner_.spawnDue(clock_.currentTimeSeconds(), roadNetwork_,
+                                                       routePlanner_, vehicleManager_);
+
+    totalSpawnedVehicles_ += spawnedCount;
+    statisticsCollector_.recordSpawned(spawnedCount);
+    statisticsCollector_.observeActiveVehicles(vehicleManager_.vehicles());
 
     vehicleManager_.update(config_.timeStepSeconds, roadNetwork_, &trafficManager_);
+
+    statisticsCollector_.observeRoads(config_.timeStepSeconds, roadNetwork_,
+                                      vehicleManager_.vehicles());
+
+    for (const auto &vehicle : vehicleManager_.vehicles())
+    {
+        if (vehicle.state() == VehicleState::Arrived)
+        {
+            statisticsCollector_.recordCompletedVehicle(vehicle);
+        }
+    }
 
     totalArrivedVehicles_ += vehicleManager_.removeArrived();
 
@@ -55,6 +70,7 @@ void Simulation::reset() noexcept
     trafficManager_.reset();
     vehicleManager_.clear();
     vehicleSpawner_.reset();
+    statisticsCollector_.reset();
     totalSpawnedVehicles_ = 0;
     totalArrivedVehicles_ = 0;
 }
@@ -87,6 +103,11 @@ const TrafficManager &Simulation::trafficManager() const noexcept
 const VehicleManager &Simulation::vehicleManager() const noexcept
 {
     return vehicleManager_;
+}
+
+const StatisticsCollector &Simulation::statistics() const noexcept
+{
+    return statisticsCollector_;
 }
 
 std::size_t Simulation::totalSpawnedVehicles() const noexcept

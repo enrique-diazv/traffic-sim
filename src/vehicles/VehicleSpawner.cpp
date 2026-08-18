@@ -24,9 +24,9 @@ VehicleSpawner::VehicleSpawner(std::vector<VehicleSpawnRequest> schedule, Vehicl
         }
     }
 
-    std::stable_sort(schedule_.begin(), schedule_.end(),
-                     [](const VehicleSpawnRequest &left, const VehicleSpawnRequest &right)
-                     { return left.spawnTimeSeconds < right.spawnTimeSeconds; });
+    std::ranges::stable_sort(schedule_,
+                             [](const VehicleSpawnRequest &left, const VehicleSpawnRequest &right)
+                             { return left.spawnTimeSeconds < right.spawnTimeSeconds; });
 
     if (!schedule_.empty())
     {
@@ -71,7 +71,7 @@ std::size_t VehicleSpawner::spawnDue(double currentTimeSeconds, const RoadNetwor
             nextVehicleId_, request.origin, request.destination, std::move(*route), dynamics_,
         };
 
-        if (!vehicle.start(network))
+        if (!vehicle.start(network, currentTimeSeconds))
         {
             throw std::logic_error{"Newly spawned vehicle could not be started"};
         }

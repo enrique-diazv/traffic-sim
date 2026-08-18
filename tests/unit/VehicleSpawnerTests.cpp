@@ -103,12 +103,16 @@ TEST(VehicleSpawnerTests, SpawnsDueVehiclesWithSequentialIdentifiers)
     ASSERT_TRUE(manager.hasVehicle(100));
     EXPECT_EQ(manager.getVehicle(100).destination(), 2U);
     EXPECT_EQ(manager.getVehicle(100).state(), VehicleState::Driving);
+    ASSERT_TRUE(manager.getVehicle(100).spawnTimeSeconds().has_value());
+    EXPECT_DOUBLE_EQ(*manager.getVehicle(100).spawnTimeSeconds(), 0.0);
     EXPECT_EQ(spawner.pendingCount(), 1U);
 
-    EXPECT_EQ(spawner.spawnDue(1.0, network, routePlanner, manager), 1U);
+    EXPECT_EQ(spawner.spawnDue(1.5, network, routePlanner, manager), 1U);
 
-    EXPECT_TRUE(manager.hasVehicle(101));
+    ASSERT_TRUE(manager.hasVehicle(101));
     EXPECT_EQ(manager.getVehicle(101).destination(), 3U);
+    ASSERT_TRUE(manager.getVehicle(101).spawnTimeSeconds().has_value());
+    EXPECT_DOUBLE_EQ(*manager.getVehicle(101).spawnTimeSeconds(), 1.5);
     EXPECT_TRUE(spawner.complete());
     EXPECT_FALSE(spawner.nextSpawnTime().has_value());
 }
