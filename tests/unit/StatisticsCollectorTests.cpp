@@ -9,10 +9,12 @@
 namespace
 {
 
+using trafficsim::CongestionState;
 using trafficsim::Intersection;
 using trafficsim::Road;
 using trafficsim::RoadNetwork;
 using trafficsim::RoadProperties;
+using trafficsim::RoadTrafficMetrics;
 using trafficsim::Route;
 using trafficsim::StatisticsCollector;
 using trafficsim::Vehicle;
@@ -148,38 +150,34 @@ TEST(StatisticsCollectorTests, AggregatesCompletedVehicleStatistics)
 
 TEST(StatisticsCollectorTests, AggregatesRoadStatistics)
 {
-    const auto network = createNetwork();
-
-    Vehicle firstVehicle{
-        100, 1, 2, Route{{10}, 10.0}, testDynamics(),
+    const std::array<RoadTrafficMetrics, 1> firstObservation{
+        RoadTrafficMetrics{
+            .roadId = 10,
+            .vehicleCount = 2,
+            .vehiclesPerKilometer = 200.0,
+            .averageSpeedMetersPerSecond = 5.0,
+            .occupancy = 1.0,
+            .speedRatio = 0.5,
+            .congestionState = CongestionState::Gridlock,
+        },
     };
-    Vehicle secondVehicle{
-        200, 1, 2, Route{{10}, 10.0}, testDynamics(),
-    };
 
-    ASSERT_TRUE(firstVehicle.start(network));
-    ASSERT_TRUE(secondVehicle.start(network));
-
-    firstVehicle.update(0.5, network);
-    secondVehicle.update(0.5, network);
-
-    std::array<Vehicle, 2> vehicles{
-        std::move(firstVehicle),
-        std::move(secondVehicle),
+    const std::array<RoadTrafficMetrics, 1> secondObservation{
+        RoadTrafficMetrics{
+            .roadId = 10,
+            .vehicleCount = 1,
+            .vehiclesPerKilometer = 100.0,
+            .averageSpeedMetersPerSecond = 0.0,
+            .occupancy = 0.5,
+            .speedRatio = 0.0,
+            .congestionState = CongestionState::Moderate,
+        },
     };
 
     StatisticsCollector collector;
-    collector.observeRoads(1.0, network, vehicles);
 
-    vehicles[0].update(1.0, network);
-
-    const VehicleFollowingConstraint stopped{
-        .maximumPositionMeters = 10.0,
-        .desiredSpeedLimitMetersPerSecond = 0.0,
-    };
-
-    vehicles[1].update(0.5, network, nullptr, &stopped);
-    collector.observeRoads(1.0, network, vehicles);
+    collector.observeRoads(1.0, firstObservation);
+    collector.observeRoads(1.0, secondObservation);
 
     const auto roadResults = collector.roadResults();
 
@@ -189,6 +187,7 @@ TEST(StatisticsCollectorTests, AggregatesRoadStatistics)
     EXPECT_EQ(roadResults[0].peakVehicleCount, 2U);
     EXPECT_DOUBLE_EQ(roadResults[0].averageOccupancy, 0.75);
     EXPECT_DOUBLE_EQ(roadResults[0].congestionTimeSeconds, 1.0);
+    EXPECT_EQ(roadResults[0].peakCongestionState, CongestionState::Gridlock);
 }
 
 TEST(StatisticsCollectorTests, RejectsIncompleteAndDuplicateVehicles)

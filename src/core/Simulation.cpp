@@ -39,8 +39,10 @@ void Simulation::step()
 
     vehicleManager_.update(config_.timeStepSeconds, roadNetwork_, &trafficManager_);
 
-    statisticsCollector_.observeRoads(config_.timeStepSeconds, roadNetwork_,
-                                      vehicleManager_.vehicles());
+    roadTrafficMonitor_.update(roadNetwork_, vehicleManager_.vehicles());
+
+    const auto roadMetrics = roadTrafficMonitor_.allMetrics();
+    statisticsCollector_.observeRoads(config_.timeStepSeconds, roadMetrics);
 
     for (const auto &vehicle : vehicleManager_.vehicles())
     {
@@ -70,6 +72,7 @@ void Simulation::reset() noexcept
     trafficManager_.reset();
     vehicleManager_.clear();
     vehicleSpawner_.reset();
+    roadTrafficMonitor_.reset();
     statisticsCollector_.reset();
     totalSpawnedVehicles_ = 0;
     totalArrivedVehicles_ = 0;
@@ -103,6 +106,11 @@ const TrafficManager &Simulation::trafficManager() const noexcept
 const VehicleManager &Simulation::vehicleManager() const noexcept
 {
     return vehicleManager_;
+}
+
+const RoadTrafficMonitor &Simulation::roadTrafficMonitor() const noexcept
+{
+    return roadTrafficMonitor_;
 }
 
 const StatisticsCollector &Simulation::statistics() const noexcept

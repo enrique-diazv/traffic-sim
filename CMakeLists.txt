@@ -50,6 +50,8 @@ add_library(trafficsim_core
 	src/statistics/ConsoleReporter.cpp
 	src/statistics/CsvExporter.cpp
 	src/statistics/StatisticsCollector.cpp
+	src/traffic/CongestionClassifier.cpp
+	src/traffic/RoadTrafficMonitor.cpp
 	src/traffic/TrafficLight.cpp
 	src/traffic/TrafficLightController.cpp
 	src/traffic/TrafficManager.cpp
@@ -98,6 +100,7 @@ if(BUILD_TESTING)
 
 	add_executable(trafficsim_tests
 		tests/integration/ScenarioSimulationTests.cpp
+		tests/unit/CongestionClassifierTests.cpp
 		tests/unit/ConsoleReporterTests.cpp
 		tests/unit/CsvExporterTests.cpp
 		tests/unit/DijkstraRoutePlannerTests.cpp
@@ -106,6 +109,7 @@ if(BUILD_TESTING)
 		tests/unit/RandomGeneratorTests.cpp
 		tests/unit/RoadNetworkTests.cpp
 		tests/unit/RoadTests.cpp
+		tests/unit/RoadTrafficMonitorTests.cpp
 		tests/unit/RouteTests.cpp
 		tests/unit/ScenarioLoaderTests.cpp
 		tests/unit/SimulationClockTests.cpp

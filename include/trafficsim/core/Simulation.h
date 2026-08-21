@@ -6,6 +6,7 @@
 #include "trafficsim/network/RoadNetwork.h"
 #include "trafficsim/routing/DijkstraRoutePlanner.h"
 #include "trafficsim/statistics/StatisticsCollector.h"
+#include "trafficsim/traffic/RoadTrafficMonitor.h"
 #include "trafficsim/traffic/TrafficManager.h"
 #include "trafficsim/vehicles/VehicleManager.h"
 #include "trafficsim/vehicles/VehicleSpawner.h"
@@ -33,6 +34,7 @@ class Simulation final
     [[nodiscard]] const RoadNetwork &roadNetwork() const noexcept;
     [[nodiscard]] const TrafficManager &trafficManager() const noexcept;
     [[nodiscard]] const VehicleManager &vehicleManager() const noexcept;
+    [[nodiscard]] const RoadTrafficMonitor &roadTrafficMonitor() const noexcept;
 
     [[nodiscard]] const StatisticsCollector &statistics() const noexcept;
 
@@ -47,6 +49,7 @@ class Simulation final
     TrafficManager trafficManager_;
     VehicleManager vehicleManager_;
     VehicleSpawner vehicleSpawner_;
+    RoadTrafficMonitor roadTrafficMonitor_;
     StatisticsCollector statisticsCollector_;
     std::size_t totalSpawnedVehicles_{};
     std::size_t totalArrivedVehicles_{};

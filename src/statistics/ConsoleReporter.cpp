@@ -18,8 +18,9 @@ void ConsoleReporter::write(std::ostream &output, double simulationTimeSeconds,
         throw std::invalid_argument{"Report simulation time must be finite and non-negative"};
     }
 
-    const auto congestedRoadCount = std::ranges::count_if(
-        roadResults, [](const RoadResult &road) { return road.congestionTimeSeconds > 0.0; });
+    const auto congestedRoadCount =
+        std::ranges::count_if(roadResults, [](const RoadResult &road)
+                              { return road.peakCongestionState >= CongestionState::Congested; });
 
     const auto previousFlags = output.flags();
     const auto previousPrecision = output.precision();

@@ -2,6 +2,7 @@
 #define TRAFFICSIM_STATISTICS_STATISTICS_TYPES_H
 
 #include "trafficsim/network/Types.h"
+#include "trafficsim/traffic/RoadTrafficMetrics.h"
 #include "trafficsim/vehicles/VehicleTypes.h"
 
 #include <cstddef>
@@ -29,6 +30,7 @@ struct RoadResult
     std::size_t peakVehicleCount{};
     double averageOccupancy{};
     double congestionTimeSeconds{};
+    CongestionState peakCongestionState{CongestionState::FreeFlow};
 };
 
 struct SimulationSummary

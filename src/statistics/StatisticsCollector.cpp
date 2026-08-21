@@ -23,65 +23,45 @@ void StatisticsCollector::observeActiveVehicles(std::span<const Vehicle> vehicle
     peakActiveVehicles_ = std::max(peakActiveVehicles_, vehicles.size());
 }
 
-void StatisticsCollector::observeRoads(double deltaSeconds, const RoadNetwork &network,
-                                       std::span<const Vehicle> vehicles)
+void StatisticsCollector::observeRoads(double deltaSeconds,
+                                       std::span<const RoadTrafficMetrics> roadMetrics)
 {
     if (!std::isfinite(deltaSeconds) || deltaSeconds < 0.0)
     {
         throw std::invalid_argument{"Road observation duration must be finite and non-negative"};
     }
 
-    struct RoadStepObservation
+    for (const auto &metrics : roadMetrics)
     {
-        std::size_t vehicleCount{};
-        double totalSpeedMetersPerSecond{};
-    };
-
-    std::unordered_map<RoadId, RoadStepObservation> stepObservations;
-
-    for (const auto &vehicle : vehicles)
-    {
-        const auto roadId = vehicle.currentRoad();
-
-        if (!roadId.has_value())
+        if (!std::isfinite(metrics.averageSpeedMetersPerSecond) ||
+            metrics.averageSpeedMetersPerSecond < 0.0 || !std::isfinite(metrics.occupancy) ||
+            metrics.occupancy < 0.0)
         {
-            continue;
+            throw std::invalid_argument{"Road metrics must be finite and non-negative"};
         }
 
-        auto &observation = stepObservations[*roadId];
-        ++observation.vehicleCount;
-        observation.totalSpeedMetersPerSecond += vehicle.speedMetersPerSecond();
-    }
-
-    for (const auto roadId : network.roadIds())
-    {
-        const auto observationIterator = stepObservations.find(roadId);
-        const auto vehicleCount = observationIterator == stepObservations.end()
-                                      ? std::size_t{}
-                                      : observationIterator->second.vehicleCount;
-        const auto totalSpeed = observationIterator == stepObservations.end()
-                                    ? 0.0
-                                    : observationIterator->second.totalSpeedMetersPerSecond;
-
-        const auto &road = network.getRoad(roadId);
-        auto [accumulatorIterator, inserted] = roadAccumulators_.try_emplace(roadId);
+        auto [accumulatorIterator, inserted] = roadAccumulators_.try_emplace(metrics.roadId);
         auto &accumulator = accumulatorIterator->second;
 
         if (inserted)
         {
-            accumulator.result.roadId = roadId;
+            accumulator.result.roadId = metrics.roadId;
         }
 
-        accumulator.totalSpeedMetersPerSecond += totalSpeed;
-        accumulator.speedObservationCount += vehicleCount;
-        accumulator.totalOccupancy +=
-            static_cast<double>(vehicleCount) / static_cast<double>(road.capacity());
+        accumulator.totalSpeedMetersPerSecond +=
+            metrics.averageSpeedMetersPerSecond * static_cast<double>(metrics.vehicleCount);
+        accumulator.speedObservationCount += metrics.vehicleCount;
+        accumulator.totalOccupancy += metrics.occupancy;
         ++accumulator.stepObservationCount;
 
         accumulator.result.peakVehicleCount =
-            std::max(accumulator.result.peakVehicleCount, vehicleCount);
+            std::max(accumulator.result.peakVehicleCount, metrics.vehicleCount);
 
-        if (vehicleCount >= road.capacity())
+        accumulator.result.peakCongestionState =
+            std::max(accumulator.result.peakCongestionState, metrics.congestionState);
+
+        if (metrics.congestionState == CongestionState::Congested ||
+            metrics.congestionState == CongestionState::Gridlock)
         {
             accumulator.result.congestionTimeSeconds += deltaSeconds;
         }

@@ -10,6 +10,7 @@
 namespace
 {
 
+using trafficsim::CongestionState;
 using trafficsim::CsvExporter;
 using trafficsim::RoadResult;
 using trafficsim::SimulationSummary;
@@ -75,6 +76,7 @@ TEST(CsvExporterTests, WritesRoadResults)
             .peakVehicleCount = 4,
             .averageOccupancy = 0.25,
             .congestionTimeSeconds = 3.0,
+            .peakCongestionState = CongestionState::Congested,
         },
     };
 
@@ -82,8 +84,8 @@ TEST(CsvExporterTests, WritesRoadResults)
     CsvExporter::writeRoadResults(output, results);
 
     EXPECT_EQ(output.str(), "road_id,average_speed_meters_per_second,peak_vehicle_count,"
-                            "average_occupancy,congestion_time_seconds\n"
-                            "10,7.5,4,0.25,3\n");
+                            "average_occupancy,congestion_time_seconds,peak_congestion_state\n"
+                            "10,7.5,4,0.25,3,congested\n");
 }
 
 TEST(CsvExporterTests, RejectsEmptyOutputDirectory)

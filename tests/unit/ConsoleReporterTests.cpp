@@ -11,6 +11,7 @@
 namespace
 {
 
+using trafficsim::CongestionState;
 using trafficsim::ConsoleReporter;
 using trafficsim::RoadResult;
 using trafficsim::SimulationSummary;
@@ -34,9 +35,11 @@ TEST(ConsoleReporterTests, WritesReadableReportAndRestoresStreamFormatting)
         RoadResult{
             .roadId = 10,
             .congestionTimeSeconds = 4.0,
+            .peakCongestionState = CongestionState::Gridlock,
         },
         RoadResult{
             .roadId = 20,
+            .peakCongestionState = CongestionState::Moderate,
         },
     };
 

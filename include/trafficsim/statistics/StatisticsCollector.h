@@ -2,6 +2,7 @@
 #define TRAFFICSIM_STATISTICS_STATISTICS_COLLECTOR_H
 
 #include "trafficsim/statistics/StatisticsTypes.h"
+#include "trafficsim/traffic/RoadTrafficMetrics.h"
 #include "trafficsim/vehicles/Vehicle.h"
 
 #include <cstddef>
@@ -18,8 +19,7 @@ class StatisticsCollector final
   public:
     void recordSpawned(std::size_t count = 1);
     void observeActiveVehicles(std::span<const Vehicle> vehicles) noexcept;
-    void observeRoads(double deltaSeconds, const RoadNetwork &network,
-                      std::span<const Vehicle> vehicles);
+    void observeRoads(double deltaSeconds, std::span<const RoadTrafficMetrics> roadMetrics);
     void recordCompletedVehicle(const Vehicle &vehicle);
     void reset() noexcept;
 

@@ -87,13 +87,14 @@ void CsvExporter::writeRoadResults(std::ostream &output, std::span<const RoadRes
 
     output << std::defaultfloat << std::setprecision(15);
     output << "road_id,average_speed_meters_per_second,peak_vehicle_count,"
-              "average_occupancy,congestion_time_seconds\n";
+              "average_occupancy,congestion_time_seconds,peak_congestion_state\n";
 
     for (const auto &road : roadResults)
     {
         output << road.roadId << ',' << road.averageSpeedMetersPerSecond << ','
                << road.peakVehicleCount << ',' << road.averageOccupancy << ','
-               << road.congestionTimeSeconds << '\n';
+               << road.congestionTimeSeconds << ',' << congestionStateName(road.peakCongestionState)
+               << '\n';
     }
 
     output.flags(previousFlags);

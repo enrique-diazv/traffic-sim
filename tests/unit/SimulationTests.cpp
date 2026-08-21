@@ -139,6 +139,35 @@ TEST(SimulationTests, StepSpawnsUpdatesAndAdvancesClock)
     EXPECT_DOUBLE_EQ(vehicle.positionMeters(), 0.1);
 }
 
+TEST(SimulationTests, ProducesRoadTrafficSnapshotDuringStepAndClearsItOnReset)
+{
+    Simulation simulation{
+        createConfig(1.0, 0.1),
+        createNetwork(100.0),
+        {
+            {0.0, 1, 2},
+        },
+    };
+
+    EXPECT_EQ(simulation.roadTrafficMonitor().roadCount(), 0U);
+
+    simulation.step();
+
+    ASSERT_TRUE(simulation.roadTrafficMonitor().hasMetrics(10));
+
+    const auto &metrics = simulation.roadTrafficMonitor().metricsFor(10);
+
+    EXPECT_EQ(metrics.vehicleCount, 1U);
+    EXPECT_DOUBLE_EQ(metrics.averageSpeedMetersPerSecond, 1.0);
+    EXPECT_DOUBLE_EQ(metrics.occupancy, 0.05);
+    EXPECT_DOUBLE_EQ(metrics.speedRatio, 0.1);
+
+    simulation.reset();
+
+    EXPECT_EQ(simulation.roadTrafficMonitor().roadCount(), 0U);
+    EXPECT_FALSE(simulation.roadTrafficMonitor().hasMetrics(10));
+}
+
 TEST(SimulationTests, RunUsesFixedStepsAndCountsArrivals)
 {
     Simulation simulation{
