@@ -31,6 +31,41 @@ std::span<const RoadId> Route::segments() const noexcept
     return std::span<const RoadId>{roadIds_};
 }
 
+void Route::replaceRemainingSegments(std::vector<RoadId> roadIds, double totalDistanceMeters)
+{
+    if (isComplete())
+    {
+        throw std::logic_error{"Cannot replace segments of a completed route"};
+    }
+
+    if (roadIds.empty() || roadIds.front() != *currentRoad())
+    {
+        throw std::invalid_argument{"Replacement route must preserve the current road"};
+    }
+
+    if (!std::isfinite(totalDistanceMeters) || totalDistanceMeters <= 0.0)
+    {
+        throw std::invalid_argument{"Replacement route distance must be finite and positive"};
+    }
+
+    const auto completedSegmentCount = segmentCount() - remainingSegments().size();
+
+    std::vector<RoadId> updatedRoadIds;
+    updatedRoadIds.reserve(completedSegmentCount + roadIds.size());
+    updatedRoadIds.insert(updatedRoadIds.end(), roadIds_.begin(),
+                          roadIds_.begin() + static_cast<std::vector<RoadId>::difference_type>(
+                                                 completedSegmentCount));
+    updatedRoadIds.insert(updatedRoadIds.end(), roadIds.begin(), roadIds.end());
+
+    roadIds_ = std::move(updatedRoadIds);
+    totalDistanceMeters_ = totalDistanceMeters;
+}
+
+std::span<const RoadId> Route::remainingSegments() const noexcept
+{
+    return segments().subspan(currentSegment_);
+}
+
 std::optional<RoadId> Route::currentRoad() const noexcept
 {
     if (isComplete())

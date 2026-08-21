@@ -92,6 +92,64 @@ TEST(VehicleTests, StartsOnlyOnce)
     EXPECT_FALSE(vehicle.start(network));
 }
 
+TEST(VehicleTests, ReplacesFutureRouteWithoutChangingCurrentMotion)
+{
+    auto network = createLinearNetwork();
+
+    network.addIntersection(Intersection{4, {.x = 150.0, .y = 50.0}});
+    addRoad(network, 30, 2, 4, 60.0, 10.0);
+    addRoad(network, 40, 4, 3, 70.0, 10.0);
+
+    Vehicle vehicle{
+        100, 1, 3, Route{{10, 20}, 150.0}, defaultDynamics(),
+    };
+
+    ASSERT_TRUE(vehicle.start(network));
+    vehicle.update(1.0, network);
+
+    const auto positionBeforeRerouting = vehicle.positionMeters();
+    const auto speedBeforeRerouting = vehicle.speedMetersPerSecond();
+
+    ASSERT_TRUE(vehicle.reroute(network, Route{{30, 40}, 130.0}));
+
+    EXPECT_EQ(vehicle.state(), VehicleState::Driving);
+    EXPECT_EQ(vehicle.currentRoad(), 10U);
+    EXPECT_DOUBLE_EQ(vehicle.positionMeters(), positionBeforeRerouting);
+    EXPECT_DOUBLE_EQ(vehicle.speedMetersPerSecond(), speedBeforeRerouting);
+
+    ASSERT_EQ(vehicle.route().segments().size(), 3U);
+    EXPECT_EQ(vehicle.route().segments()[0], 10U);
+    EXPECT_EQ(vehicle.route().segments()[1], 30U);
+    EXPECT_EQ(vehicle.route().segments()[2], 40U);
+    EXPECT_DOUBLE_EQ(vehicle.route().totalDistanceMeters(), 230.0);
+}
+
+TEST(VehicleTests, RejectsInvalidReroutingRequests)
+{
+    auto network = createLinearNetwork();
+
+    network.addIntersection(Intersection{4, {.x = 150.0, .y = 50.0}});
+    addRoad(network, 30, 2, 4, 60.0, 10.0);
+    addRoad(network, 40, 4, 3, 70.0, 10.0);
+
+    Vehicle vehicle{
+        100, 1, 3, Route{{10, 20}, 150.0}, defaultDynamics(),
+    };
+
+    EXPECT_FALSE(vehicle.reroute(network, Route{{30, 40}, 130.0}));
+
+    ASSERT_TRUE(vehicle.start(network));
+
+    EXPECT_THROW(static_cast<void>(vehicle.reroute(network, Route{{40}, 70.0})),
+                 std::invalid_argument);
+    EXPECT_THROW(static_cast<void>(vehicle.reroute(network, Route{{30}, 60.0})),
+                 std::invalid_argument);
+
+    ASSERT_EQ(vehicle.route().segments().size(), 2U);
+    EXPECT_EQ(vehicle.route().segments()[0], 10U);
+    EXPECT_EQ(vehicle.route().segments()[1], 20U);
+}
+
 TEST(VehicleTests, EmptyRouteArrivesImmediately)
 {
     RoadNetwork network;

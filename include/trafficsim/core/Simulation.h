@@ -4,7 +4,8 @@
 #include "trafficsim/core/SimulationClock.h"
 #include "trafficsim/core/SimulationConfig.h"
 #include "trafficsim/network/RoadNetwork.h"
-#include "trafficsim/routing/DijkstraRoutePlanner.h"
+#include "trafficsim/routing/AStarRoutePlanner.h"
+#include "trafficsim/routing/DynamicRoutingManager.h"
 #include "trafficsim/statistics/StatisticsCollector.h"
 #include "trafficsim/traffic/RoadTrafficMonitor.h"
 #include "trafficsim/traffic/TrafficManager.h"
@@ -35,7 +36,7 @@ class Simulation final
     [[nodiscard]] const TrafficManager &trafficManager() const noexcept;
     [[nodiscard]] const VehicleManager &vehicleManager() const noexcept;
     [[nodiscard]] const RoadTrafficMonitor &roadTrafficMonitor() const noexcept;
-
+    [[nodiscard]] const DynamicRoutingManager &dynamicRoutingManager() const noexcept;
     [[nodiscard]] const StatisticsCollector &statistics() const noexcept;
 
     [[nodiscard]] std::size_t totalSpawnedVehicles() const noexcept;
@@ -45,7 +46,8 @@ class Simulation final
     SimulationConfig config_;
     RoadNetwork roadNetwork_;
     SimulationClock clock_;
-    DijkstraRoutePlanner routePlanner_;
+    AStarRoutePlanner routePlanner_;
+    DynamicRoutingManager dynamicRoutingManager_;
     TrafficManager trafficManager_;
     VehicleManager vehicleManager_;
     VehicleSpawner vehicleSpawner_;

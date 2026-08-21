@@ -37,6 +37,7 @@ class Vehicle final
     [[nodiscard]] double waitingTimeSeconds() const noexcept;
 
     [[nodiscard]] bool start(const RoadNetwork &network, double spawnTimeSeconds = 0.0);
+    [[nodiscard]] bool reroute(const RoadNetwork &network, Route continuation);
     void update(double deltaSeconds, const RoadNetwork &network,
                 const TrafficManager *trafficManager = nullptr,
                 const VehicleFollowingConstraint *followingConstraint = nullptr);

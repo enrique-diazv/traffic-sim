@@ -10,6 +10,8 @@ Simulation::Simulation(SimulationConfig config, RoadNetwork network,
                        std::vector<VehicleSpawnRequest> spawnSchedule,
                        TrafficManager trafficManager)
     : config_{config}, roadNetwork_{std::move(network)}, clock_{config_.timeStepSeconds},
+      routePlanner_{CongestionAwareRouteCost{config_.congestionCost}},
+      dynamicRoutingManager_{config_.rerouting, config_.congestionCost},
       trafficManager_{std::move(trafficManager)},
       vehicleManager_{
           config_.maximumVehicles,
@@ -36,6 +38,9 @@ void Simulation::step()
     totalSpawnedVehicles_ += spawnedCount;
     statisticsCollector_.recordSpawned(spawnedCount);
     statisticsCollector_.observeActiveVehicles(vehicleManager_.vehicles());
+
+    static_cast<void>(dynamicRoutingManager_.update(clock_.currentTimeSeconds(), roadNetwork_,
+                                                    roadTrafficMonitor_, vehicleManager_));
 
     vehicleManager_.update(config_.timeStepSeconds, roadNetwork_, &trafficManager_);
 
@@ -73,6 +78,7 @@ void Simulation::reset() noexcept
     vehicleManager_.clear();
     vehicleSpawner_.reset();
     roadTrafficMonitor_.reset();
+    dynamicRoutingManager_.reset();
     statisticsCollector_.reset();
     totalSpawnedVehicles_ = 0;
     totalArrivedVehicles_ = 0;
@@ -111,6 +117,11 @@ const VehicleManager &Simulation::vehicleManager() const noexcept
 const RoadTrafficMonitor &Simulation::roadTrafficMonitor() const noexcept
 {
     return roadTrafficMonitor_;
+}
+
+const DynamicRoutingManager &Simulation::dynamicRoutingManager() const noexcept
+{
+    return dynamicRoutingManager_;
 }
 
 const StatisticsCollector &Simulation::statistics() const noexcept

@@ -39,6 +39,9 @@ void SimulationConfig::validate() const
     {
         throw std::invalid_argument{"Reaction time must be finite and positive"};
     }
+
+    rerouting.validate();
+    congestionCost.validate();
 }
 
 } // namespace trafficsim

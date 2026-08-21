@@ -17,6 +17,10 @@ class Route final
     Route(std::vector<RoadId> roadIds, double totalDistanceMeters);
 
     [[nodiscard]] std::span<const RoadId> segments() const noexcept;
+    [[nodiscard]] std::span<const RoadId> remainingSegments() const noexcept;
+
+    void replaceRemainingSegments(std::vector<RoadId> roadIds, double totalDistanceMeters);
+
     [[nodiscard]] std::optional<RoadId> currentRoad() const noexcept;
     [[nodiscard]] std::optional<RoadId> nextRoad() const noexcept;
 

@@ -24,6 +24,59 @@ TEST(RouteTests, StoresSegmentsAndDistance)
     EXPECT_DOUBLE_EQ(route.totalDistanceMeters(), 450.0);
 }
 
+TEST(RouteTests, ExposesOnlyRemainingSegments)
+{
+    Route route{{10, 20, 30}, 450.0};
+
+    ASSERT_EQ(route.remainingSegments().size(), 3U);
+    EXPECT_EQ(route.remainingSegments()[0], 10U);
+
+    ASSERT_TRUE(route.advance());
+
+    ASSERT_EQ(route.remainingSegments().size(), 2U);
+    EXPECT_EQ(route.remainingSegments()[0], 20U);
+    EXPECT_EQ(route.remainingSegments()[1], 30U);
+
+    ASSERT_TRUE(route.advance());
+    ASSERT_TRUE(route.advance());
+
+    EXPECT_TRUE(route.remainingSegments().empty());
+    EXPECT_EQ(route.segments().size(), 3U);
+}
+
+TEST(RouteTests, ReplacesOnlyCurrentAndFutureSegments)
+{
+    Route route{{10, 20, 30}, 450.0};
+
+    ASSERT_TRUE(route.advance());
+
+    route.replaceRemainingSegments({20, 40, 50}, 600.0);
+
+    ASSERT_EQ(route.segments().size(), 4U);
+    EXPECT_EQ(route.segments()[0], 10U);
+    EXPECT_EQ(route.segments()[1], 20U);
+    EXPECT_EQ(route.segments()[2], 40U);
+    EXPECT_EQ(route.segments()[3], 50U);
+
+    ASSERT_EQ(route.remainingSegments().size(), 3U);
+    EXPECT_EQ(route.currentRoad(), 20U);
+    EXPECT_DOUBLE_EQ(route.totalDistanceMeters(), 600.0);
+}
+
+TEST(RouteTests, RejectsInvalidRemainingSegmentReplacement)
+{
+    Route route{{10, 20}, 200.0};
+
+    EXPECT_THROW(route.replaceRemainingSegments({}, 100.0), std::invalid_argument);
+    EXPECT_THROW(route.replaceRemainingSegments({99}, 100.0), std::invalid_argument);
+    EXPECT_THROW(route.replaceRemainingSegments({10}, -1.0), std::invalid_argument);
+
+    ASSERT_TRUE(route.advance());
+    ASSERT_TRUE(route.advance());
+
+    EXPECT_THROW(route.replaceRemainingSegments({20}, 200.0), std::logic_error);
+}
+
 TEST(RouteTests, TracksCurrentAndNextSegments)
 {
     Route route{{10, 20, 30}, 450.0};

@@ -1,6 +1,7 @@
 #ifndef TRAFFICSIM_CORE_SIMULATION_CONFIG_H
 #define TRAFFICSIM_CORE_SIMULATION_CONFIG_H
 
+#include "trafficsim/routing/ReroutingPolicy.h"
 #include "trafficsim/vehicles/VehicleTypes.h"
 
 #include <cstddef>
@@ -24,6 +25,9 @@ struct SimulationConfig
 
     double minimumFollowingDistanceMeters{2.0};
     double reactionTimeSeconds{1.0};
+
+    ReroutingConfig rerouting{};
+    CongestionCostConfig congestionCost{};
 
     void validate() const;
 };

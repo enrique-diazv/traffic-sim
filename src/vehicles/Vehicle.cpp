@@ -6,6 +6,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 namespace trafficsim
 {
@@ -83,6 +84,23 @@ void validateRoute(const RoadNetwork &network, IntersectionId origin, Intersecti
     {
         throw std::invalid_argument{"Vehicle route does not reach its destination"};
     }
+}
+
+double calculateRouteDistance(const RoadNetwork &network, std::span<const RoadId> roadIds)
+{
+    double totalDistanceMeters = 0.0;
+
+    for (const auto roadId : roadIds)
+    {
+        totalDistanceMeters += network.getRoad(roadId).lengthMeters();
+
+        if (!std::isfinite(totalDistanceMeters))
+        {
+            throw std::overflow_error{"Vehicle route distance overflow"};
+        }
+    }
+
+    return totalDistanceMeters;
 }
 
 } // namespace
@@ -221,6 +239,54 @@ bool Vehicle::start(const RoadNetwork &network, double spawnTimeSeconds)
         arrivalTimeSeconds_ = spawnTimeSeconds;
     }
 
+    return true;
+}
+
+bool Vehicle::reroute(const RoadNetwork &network, Route continuation)
+{
+    switch (state_)
+    {
+    case VehicleState::Driving:
+    case VehicleState::Waiting:
+    case VehicleState::StoppedAtLight:
+        break;
+
+    case VehicleState::Spawning:
+    case VehicleState::Rerouting:
+    case VehicleState::Arrived:
+        return false;
+    }
+
+    const auto currentRoadId = route_.currentRoad();
+
+    if (!currentRoadId.has_value())
+    {
+        throw std::logic_error{"Active vehicle has no current road for rerouting"};
+    }
+
+    const auto &currentRoad = network.getRoad(*currentRoadId);
+
+    validateRoute(network, currentRoad.destination(), destination_, continuation);
+
+    const auto continuationSegments = continuation.segments();
+    std::vector<RoadId> replacementRemainingSegments;
+    replacementRemainingSegments.reserve(1 + continuationSegments.size());
+    replacementRemainingSegments.push_back(*currentRoadId);
+    replacementRemainingSegments.insert(replacementRemainingSegments.end(),
+                                        continuationSegments.begin(), continuationSegments.end());
+
+    const auto completedSegmentCount = route_.segmentCount() - route_.remainingSegments().size();
+    const auto completedSegments = route_.segments().first(completedSegmentCount);
+
+    const auto totalDistanceMeters = calculateRouteDistance(network, completedSegments) +
+                                     calculateRouteDistance(network, replacementRemainingSegments);
+
+    if (!std::isfinite(totalDistanceMeters))
+    {
+        throw std::overflow_error{"Rerouted vehicle distance overflow"};
+    }
+
+    route_.replaceRemainingSegments(std::move(replacementRemainingSegments), totalDistanceMeters);
     return true;
 }
 

@@ -47,6 +47,63 @@ RoadNetwork createNetwork(double roadLengthMeters)
     return network;
 }
 
+RoadNetwork createDynamicRoutingNetwork()
+{
+    RoadNetwork network;
+
+    network.addIntersection(Intersection{1, {.x = 0.0, .y = 0.0}});
+    network.addIntersection(Intersection{2, {.x = 100.0, .y = 0.0}});
+    network.addIntersection(Intersection{3, {.x = 200.0, .y = 0.0}});
+    network.addIntersection(Intersection{4, {.x = 100.0, .y = 100.0}});
+
+    network.addRoad(Road{
+        10,
+        RoadProperties{
+            .origin = 1,
+            .destination = 2,
+            .lengthMeters = 100.0,
+            .speedLimitMetersPerSecond = 20.0,
+            .laneCount = 1,
+            .capacity = 10,
+        },
+    });
+    network.addRoad(Road{
+        20,
+        RoadProperties{
+            .origin = 2,
+            .destination = 3,
+            .lengthMeters = 100.0,
+            .speedLimitMetersPerSecond = 20.0,
+            .laneCount = 1,
+            .capacity = 1,
+        },
+    });
+    network.addRoad(Road{
+        30,
+        RoadProperties{
+            .origin = 2,
+            .destination = 4,
+            .lengthMeters = 120.0,
+            .speedLimitMetersPerSecond = 20.0,
+            .laneCount = 1,
+            .capacity = 10,
+        },
+    });
+    network.addRoad(Road{
+        40,
+        RoadProperties{
+            .origin = 4,
+            .destination = 3,
+            .lengthMeters = 120.0,
+            .speedLimitMetersPerSecond = 20.0,
+            .laneCount = 1,
+            .capacity = 10,
+        },
+    });
+
+    return network;
+}
+
 SimulationConfig createConfig(double durationSeconds, double timeStepSeconds)
 {
     SimulationConfig config;
@@ -166,6 +223,51 @@ TEST(SimulationTests, ProducesRoadTrafficSnapshotDuringStepAndClearsItOnReset)
 
     EXPECT_EQ(simulation.roadTrafficMonitor().roadCount(), 0U);
     EXPECT_FALSE(simulation.roadTrafficMonitor().hasMetrics(10));
+}
+
+TEST(SimulationTests, ReroutesVehicleUsingPreviousTrafficSnapshot)
+{
+    Simulation simulation{
+        createConfig(1.0, 0.1),
+        createDynamicRoutingNetwork(),
+        {
+            {0.0, 1, 3},
+            {0.0, 2, 3},
+        },
+    };
+
+    simulation.step();
+
+    EXPECT_EQ(simulation.dynamicRoutingManager().totalEvaluations(), 0U);
+    EXPECT_EQ(simulation.dynamicRoutingManager().totalReroutes(), 0U);
+
+    const auto &initialTarget = simulation.vehicleManager().getVehicle(1);
+
+    ASSERT_EQ(initialTarget.route().segments().size(), 2U);
+    EXPECT_EQ(initialTarget.route().segments()[0], 10U);
+    EXPECT_EQ(initialTarget.route().segments()[1], 20U);
+
+    ASSERT_TRUE(simulation.roadTrafficMonitor().hasMetrics(20));
+    EXPECT_EQ(simulation.roadTrafficMonitor().metricsFor(20).congestionState,
+              trafficsim::CongestionState::Gridlock);
+
+    simulation.step();
+
+    EXPECT_EQ(simulation.dynamicRoutingManager().totalEvaluations(), 1U);
+    EXPECT_EQ(simulation.dynamicRoutingManager().totalReroutes(), 1U);
+
+    const auto &reroutedTarget = simulation.vehicleManager().getVehicle(1);
+
+    ASSERT_EQ(reroutedTarget.route().segments().size(), 3U);
+    EXPECT_EQ(reroutedTarget.route().segments()[0], 10U);
+    EXPECT_EQ(reroutedTarget.route().segments()[1], 30U);
+    EXPECT_EQ(reroutedTarget.route().segments()[2], 40U);
+    EXPECT_EQ(reroutedTarget.currentRoad(), 10U);
+
+    simulation.reset();
+
+    EXPECT_EQ(simulation.dynamicRoutingManager().totalEvaluations(), 0U);
+    EXPECT_EQ(simulation.dynamicRoutingManager().totalReroutes(), 0U);
 }
 
 TEST(SimulationTests, RunUsesFixedStepsAndCountsArrivals)

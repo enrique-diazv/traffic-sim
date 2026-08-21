@@ -58,6 +58,24 @@ const Json &requiredObject(const Json &object, std::string_view key, std::string
     return value;
 }
 
+const Json *optionalObject(const Json &object, std::string_view key, std::string_view context)
+{
+    const std::string keyText{key};
+    const auto iterator = object.find(keyText);
+
+    if (iterator == object.end())
+    {
+        return nullptr;
+    }
+
+    if (!iterator->is_object())
+    {
+        throwInvalidScenario(qualifiedName(context, key) + " must be an object");
+    }
+
+    return &*iterator;
+}
+
 const Json &requiredArray(const Json &object, std::string_view key, std::string_view context)
 {
     const auto &value = requiredField(object, key, context);
@@ -121,6 +139,32 @@ TrafficLightState parseTrafficLightState(std::string_view state, std::string_vie
     }
 
     throwInvalidScenario(std::string{context} + " must be green, yellow, or red");
+}
+
+CongestionState parseCongestionState(std::string_view state, std::string_view context)
+{
+    if (state == "free_flow")
+    {
+        return CongestionState::FreeFlow;
+    }
+
+    if (state == "moderate")
+    {
+        return CongestionState::Moderate;
+    }
+
+    if (state == "congested")
+    {
+        return CongestionState::Congested;
+    }
+
+    if (state == "gridlock")
+    {
+        return CongestionState::Gridlock;
+    }
+
+    throwInvalidScenario(std::string{context} +
+                         " must be free_flow, moderate, congested, or gridlock");
 }
 
 template <typename Unsigned>
@@ -343,6 +387,32 @@ SimulationConfig parseSimulationConfig(const Json &document)
             requiredDouble(simulation, "minimum_following_distance_meters", "simulation"),
         .reactionTimeSeconds = requiredDouble(simulation, "reaction_time_seconds", "simulation"),
     };
+
+    if (const auto *dynamicRouting = optionalObject(simulation, "dynamic_routing", "simulation");
+        dynamicRouting != nullptr)
+    {
+        constexpr std::string_view context{"simulation.dynamic_routing"};
+
+        config.rerouting = ReroutingConfig{
+            .evaluationIntervalSeconds =
+                requiredDouble(*dynamicRouting, "evaluation_interval_seconds", context),
+            .minimumImprovementRatio =
+                requiredDouble(*dynamicRouting, "minimum_improvement_ratio", context),
+            .severeCongestionThreshold = parseCongestionState(
+                requiredString(*dynamicRouting, "severe_congestion_threshold", context),
+                qualifiedName(context, "severe_congestion_threshold")),
+        };
+
+        config.congestionCost = CongestionCostConfig{
+            .minimumSpeedRatio = requiredDouble(*dynamicRouting, "minimum_speed_ratio", context),
+            .moderatePenaltyMultiplier =
+                requiredDouble(*dynamicRouting, "moderate_penalty_multiplier", context),
+            .congestedPenaltyMultiplier =
+                requiredDouble(*dynamicRouting, "congested_penalty_multiplier", context),
+            .gridlockPenaltyMultiplier =
+                requiredDouble(*dynamicRouting, "gridlock_penalty_multiplier", context),
+        };
+    }
 
     config.validate();
     return config;

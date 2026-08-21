@@ -77,4 +77,16 @@ TEST(SimulationConfigTests, RejectsInvalidReactionTime)
     EXPECT_THROW(config.validate(), std::invalid_argument);
 }
 
+TEST(SimulationConfigTests, RejectsInvalidRoutingConfiguration)
+{
+    SimulationConfig config;
+
+    config.rerouting.evaluationIntervalSeconds = 0.0;
+    EXPECT_THROW(config.validate(), std::invalid_argument);
+
+    config = SimulationConfig{};
+    config.congestionCost.minimumSpeedRatio = 0.0;
+    EXPECT_THROW(config.validate(), std::invalid_argument);
+}
+
 } // namespace

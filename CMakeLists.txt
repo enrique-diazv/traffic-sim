@@ -45,8 +45,13 @@ add_library(trafficsim_core
 	src/network/Intersection.cpp
 	src/network/Road.cpp
 	src/network/RoadNetwork.cpp
+	src/routing/AStarRoutePlanner.cpp
+	src/routing/CongestionAwareRouteCost.cpp
 	src/routing/DijkstraRoutePlanner.cpp
+	src/routing/DynamicRoutingManager.cpp
+	src/routing/ReroutingPolicy.cpp
 	src/routing/Route.cpp
+	src/routing/RouteComparator.cpp
 	src/statistics/ConsoleReporter.cpp
 	src/statistics/CsvExporter.cpp
 	src/statistics/StatisticsCollector.cpp
@@ -100,17 +105,22 @@ if(BUILD_TESTING)
 
 	add_executable(trafficsim_tests
 		tests/integration/ScenarioSimulationTests.cpp
+		tests/unit/AStarRoutePlannerTests.cpp
+		tests/unit/CongestionAwareRouteCostTests.cpp
 		tests/unit/CongestionClassifierTests.cpp
 		tests/unit/ConsoleReporterTests.cpp
 		tests/unit/CsvExporterTests.cpp
 		tests/unit/DijkstraRoutePlannerTests.cpp
+		tests/unit/DynamicRoutingManagerTests.cpp
 		tests/unit/IntersectionTests.cpp
 		tests/unit/ProjectSetupTests.cpp
 		tests/unit/RandomGeneratorTests.cpp
+		tests/unit/ReroutingPolicyTests.cpp
 		tests/unit/RoadNetworkTests.cpp
 		tests/unit/RoadTests.cpp
 		tests/unit/RoadTrafficMonitorTests.cpp
 		tests/unit/RouteTests.cpp
+		tests/unit/RouteComparatorTests.cpp
 		tests/unit/ScenarioLoaderTests.cpp
 		tests/unit/SimulationClockTests.cpp
 		tests/unit/SimulationConfigTests.cpp

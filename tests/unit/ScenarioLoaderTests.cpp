@@ -45,7 +45,16 @@ TEST(ScenarioLoaderTests, LoadsSimulationConfiguration)
             "deceleration_meters_per_second_squared": 5.0
         },
         "minimum_following_distance_meters": 2.5,
-        "reaction_time_seconds": 1.25
+        "reaction_time_seconds": 1.25,
+        "dynamic_routing": {
+            "evaluation_interval_seconds": 2.5,
+            "minimum_improvement_ratio": 0.25,
+            "severe_congestion_threshold": "gridlock",
+            "minimum_speed_ratio": 0.2,
+            "moderate_penalty_multiplier": 1.2,
+            "congested_penalty_multiplier": 2.0,
+            "gridlock_penalty_multiplier": 4.0
+        }
     },
     "intersections": [],
     "roads": [],
@@ -66,6 +75,14 @@ TEST(ScenarioLoaderTests, LoadsSimulationConfiguration)
     EXPECT_DOUBLE_EQ(config.defaultVehicleDynamics.decelerationMetersPerSecondSquared, 5.0);
     EXPECT_DOUBLE_EQ(config.minimumFollowingDistanceMeters, 2.5);
     EXPECT_DOUBLE_EQ(config.reactionTimeSeconds, 1.25);
+
+    EXPECT_DOUBLE_EQ(config.rerouting.evaluationIntervalSeconds, 2.5);
+    EXPECT_DOUBLE_EQ(config.rerouting.minimumImprovementRatio, 0.25);
+    EXPECT_EQ(config.rerouting.severeCongestionThreshold, trafficsim::CongestionState::Gridlock);
+    EXPECT_DOUBLE_EQ(config.congestionCost.minimumSpeedRatio, 0.2);
+    EXPECT_DOUBLE_EQ(config.congestionCost.moderatePenaltyMultiplier, 1.2);
+    EXPECT_DOUBLE_EQ(config.congestionCost.congestedPenaltyMultiplier, 2.0);
+    EXPECT_DOUBLE_EQ(config.congestionCost.gridlockPenaltyMultiplier, 4.0);
 
     EXPECT_EQ(scenario.roadNetwork.intersectionCount(), 0U);
     EXPECT_EQ(scenario.roadNetwork.roadCount(), 0U);
