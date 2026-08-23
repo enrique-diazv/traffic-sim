@@ -98,6 +98,21 @@ std::span<const RoadId> RoadNetwork::outgoingRoads(IntersectionId intersectionId
     return std::span<const RoadId>{roads->second};
 }
 
+std::vector<IntersectionId> RoadNetwork::intersectionIds() const
+{
+    std::vector<IntersectionId> identifiers;
+    identifiers.reserve(intersections_.size());
+
+    for (const auto &[intersectionId, intersection] : intersections_)
+    {
+        static_cast<void>(intersection);
+        identifiers.push_back(intersectionId);
+    }
+
+    std::ranges::sort(identifiers);
+    return identifiers;
+}
+
 std::vector<RoadId> RoadNetwork::roadIds() const
 {
     std::vector<RoadId> identifiers;

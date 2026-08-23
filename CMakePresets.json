@@ -2,7 +2,7 @@
     "version": 6,
     "cmakeMinimumRequired": {
         "major": 3,
-        "minor": 25,
+        "minor": 28,
         "patch": 0
     },
     "configurePresets": [
@@ -26,6 +26,15 @@
             "cacheVariables": {
                 "BUILD_TESTING": "OFF"
             }
+        },
+        {
+            "name": "visualizer",
+            "displayName": "Configuración del visualizador SFML",
+            "inherits": "base",
+            "cacheVariables": {
+                "BUILD_TESTING": "OFF",
+                "TRAFFICSIM_BUILD_VISUALIZER": "ON"
+            }
         }
     ],
     "buildPresets": [
@@ -40,6 +49,12 @@
             "displayName": "Compilar Release",
             "configurePreset": "release",
             "configuration": "Release"
+        },
+        {
+            "name": "visualizer",
+            "displayName": "Compilar visualizador SFML",
+            "configurePreset": "visualizer",
+            "configuration": "Debug"
         }
     ],
     "testPresets": [

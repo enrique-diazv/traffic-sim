@@ -80,6 +80,22 @@ TEST(RoadNetworkTests, AddsDirectedRoadAndReportsOutgoingRoad)
     EXPECT_TRUE(network.outgoingRoads(2).empty());
 }
 
+TEST(RoadNetworkTests, ReturnsIntersectionIdentifiersInDeterministicOrder)
+{
+    RoadNetwork network;
+
+    network.addIntersection(Intersection{30, {30.0, 0.0}});
+    network.addIntersection(Intersection{10, {10.0, 0.0}});
+    network.addIntersection(Intersection{20, {20.0, 0.0}});
+
+    const auto intersectionIds = network.intersectionIds();
+
+    ASSERT_EQ(intersectionIds.size(), 3U);
+    EXPECT_EQ(intersectionIds[0], 10U);
+    EXPECT_EQ(intersectionIds[1], 20U);
+    EXPECT_EQ(intersectionIds[2], 30U);
+}
+
 TEST(RoadNetworkTests, ReturnsRoadIdentifiersInDeterministicOrder)
 {
     RoadNetwork network;

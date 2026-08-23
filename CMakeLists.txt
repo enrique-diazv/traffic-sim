@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.28)
 
 project(TrafficSim
 	VERSION 0.1.0
@@ -7,6 +7,11 @@ project(TrafficSim
 )
 
 include(FetchContent)
+
+option(TRAFFICSIM_BUILD_VISUALIZER
+	"Build the optional SFML visualization frontend."
+	OFF
+)
 
 FetchContent_Declare(
 	nlohmann_json
@@ -19,6 +24,39 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(nlohmann_json)
+
+if(TRAFFICSIM_BUILD_VISUALIZER)
+	set(
+		SFML_BUILD_AUDIO
+		OFF
+		CACHE
+			BOOL
+			"Do not build the unused SFML Audio module."
+		FORCE
+	)
+	set(
+		SFML_BUILD_NETWORK
+		OFF
+		CACHE
+			BOOL
+			"Do not build the unused SFML Network module."
+		FORCE
+	)
+
+	FetchContent_Declare(
+		SFML
+		GIT_REPOSITORY
+		https://github.com/SFML/SFML.git
+		GIT_TAG
+		3.1.0
+		GIT_SHALLOW
+		ON
+		EXCLUDE_FROM_ALL
+		SYSTEM
+	)
+
+	FetchContent_MakeAvailable(SFML)
+endif()
 
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/scenarios")
 
@@ -87,6 +125,40 @@ add_executable(trafficsim
 
 target_link_libraries(trafficsim PRIVATE trafficsim_core)
 trafficsim_set_warnings(trafficsim)
+
+if(TRAFFICSIM_BUILD_VISUALIZER)
+	add_executable(trafficsim_visualizer
+		src/visualization/SimulationVisualizer.cpp
+		src/visualization/SimulationVisualizer.h
+		src/visualization/main.cpp
+	)
+
+	target_link_libraries(trafficsim_visualizer
+		PRIVATE
+			trafficsim_core
+			SFML::Graphics
+	)
+
+	trafficsim_set_warnings(trafficsim_visualizer)
+	add_custom_command(
+		TARGET trafficsim_visualizer
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E make_directory
+			"$<TARGET_FILE_DIR:trafficsim_visualizer>/assets/fonts"
+		COMMAND ${CMAKE_COMMAND} -E make_directory
+			"$<TARGET_FILE_DIR:trafficsim_visualizer>/scenarios"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${PROJECT_SOURCE_DIR}/assets/fonts/RobotoMono-Regular.ttf"
+			"$<TARGET_FILE_DIR:trafficsim_visualizer>/assets/fonts/RobotoMono-Regular.ttf"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${PROJECT_SOURCE_DIR}/assets/fonts/OFL.txt"
+			"$<TARGET_FILE_DIR:trafficsim_visualizer>/assets/fonts/OFL.txt"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${PROJECT_SOURCE_DIR}/scenarios/basic.json"
+			"$<TARGET_FILE_DIR:trafficsim_visualizer>/scenarios/basic.json"
+		VERBATIM
+	)
+endif()
 
 include(CTest)
 
