@@ -66,6 +66,14 @@ configure_file(
 	COPYONLY
 )
 
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/experiments")
+
+configure_file(
+	"${PROJECT_SOURCE_DIR}/experiments/basic_sweep.json"
+	"${PROJECT_BINARY_DIR}/experiments/basic_sweep.json"
+	COPYONLY
+)
+
 function(trafficsim_set_warnings targetName)
 	if(MSVC)
 		target_compile_options(${targetName} PRIVATE /W4 /permissive-)
@@ -79,6 +87,13 @@ add_library(trafficsim_core
 	src/core/Simulation.cpp
 	src/core/SimulationClock.cpp
 	src/core/SimulationConfig.cpp
+	src/experiments/BatchExperimentConfig.cpp
+	src/experiments/BatchExperimentRunner.cpp
+	src/experiments/ExperimentAggregator.cpp
+	src/experiments/ExperimentCsvExporter.cpp
+	src/experiments/ExperimentPlan.cpp
+	src/experiments/ExperimentPlanLoader.cpp
+	src/experiments/ParameterSweep.cpp
 	src/io/ScenarioLoader.cpp
 	src/network/Intersection.cpp
 	src/network/Road.cpp
@@ -125,6 +140,13 @@ add_executable(trafficsim
 
 target_link_libraries(trafficsim PRIVATE trafficsim_core)
 trafficsim_set_warnings(trafficsim)
+
+add_executable(trafficsim_experiments
+	src/experiment_app/main.cpp
+)
+
+target_link_libraries(trafficsim_experiments PRIVATE trafficsim_core)
+trafficsim_set_warnings(trafficsim_experiments)
 
 if(TRAFFICSIM_BUILD_VISUALIZER)
 	add_executable(trafficsim_visualizer
@@ -176,15 +198,23 @@ if(BUILD_TESTING)
 	FetchContent_MakeAvailable(googletest)
 
 	add_executable(trafficsim_tests
+		tests/integration/BatchExperimentPipelineTests.cpp
 		tests/integration/ScenarioSimulationTests.cpp
 		tests/unit/AStarRoutePlannerTests.cpp
+		tests/unit/BatchExperimentConfigTests.cpp
+		tests/unit/BatchExperimentRunnerTests.cpp
 		tests/unit/CongestionAwareRouteCostTests.cpp
 		tests/unit/CongestionClassifierTests.cpp
 		tests/unit/ConsoleReporterTests.cpp
 		tests/unit/CsvExporterTests.cpp
 		tests/unit/DijkstraRoutePlannerTests.cpp
 		tests/unit/DynamicRoutingManagerTests.cpp
+		tests/unit/ExperimentAggregatorTests.cpp
+		tests/unit/ExperimentCsvExporterTests.cpp
+		tests/unit/ExperimentPlanTests.cpp
+		tests/unit/ExperimentPlanLoaderTests.cpp
 		tests/unit/IntersectionTests.cpp
+		tests/unit/ParameterSweepTests.cpp
 		tests/unit/ProjectSetupTests.cpp
 		tests/unit/RandomGeneratorTests.cpp
 		tests/unit/ReroutingPolicyTests.cpp
@@ -218,5 +248,9 @@ if(BUILD_TESTING)
 	trafficsim_set_warnings(trafficsim_tests)
 
 	include(GoogleTest)
-	gtest_discover_tests(trafficsim_tests)
+	gtest_discover_tests(
+		trafficsim_tests
+		DISCOVERY_TIMEOUT
+		30
+	)
 endif()

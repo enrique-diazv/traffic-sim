@@ -1,0 +1,16 @@
+{
+    "scenario": "../scenarios/basic.json",
+    "output_directory": "../results/experiments/basic_sweep",
+    "repetitions": 3,
+    "seed_stride": 100,
+    "sweeps": [
+        {
+            "parameter": "maximum_vehicles",
+            "values": [2, 10]
+        },
+        {
+            "parameter": "minimum_following_distance_meters",
+            "values": [1.0, 2.0, 4.0]
+        }
+    ]
+}
