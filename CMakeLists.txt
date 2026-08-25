@@ -13,6 +13,11 @@ option(TRAFFICSIM_BUILD_VISUALIZER
 	OFF
 )
 
+option(TRAFFICSIM_BUILD_BENCHMARKS
+	"Build the optional performance benchmark executable."
+	OFF
+)
+
 FetchContent_Declare(
 	nlohmann_json
 	URL
@@ -147,6 +152,33 @@ add_executable(trafficsim_experiments
 
 target_link_libraries(trafficsim_experiments PRIVATE trafficsim_core)
 trafficsim_set_warnings(trafficsim_experiments)
+
+if(TRAFFICSIM_BUILD_BENCHMARKS)
+	add_executable(trafficsim_benchmarks
+		benchmarks/BenchmarkCsvExporter.cpp
+		benchmarks/BenchmarkCsvExporter.h
+		benchmarks/BenchmarkFixtures.cpp
+		benchmarks/BenchmarkFixtures.h
+		benchmarks/BenchmarkTimer.h
+		benchmarks/BenchmarkTypes.cpp
+		benchmarks/BenchmarkTypes.h
+		benchmarks/PerformanceBenchmarkRunner.cpp
+		benchmarks/PerformanceBenchmarkRunner.h
+		benchmarks/ProcessCpuTime.cpp
+		benchmarks/ProcessCpuTime.h
+		benchmarks/main.cpp
+	)
+
+	target_include_directories(trafficsim_benchmarks
+		PRIVATE ${PROJECT_SOURCE_DIR}/benchmarks
+	)
+
+	target_link_libraries(trafficsim_benchmarks
+		PRIVATE trafficsim_core
+	)
+
+	trafficsim_set_warnings(trafficsim_benchmarks)
+endif()
 
 if(TRAFFICSIM_BUILD_VISUALIZER)
 	add_executable(trafficsim_visualizer

@@ -35,6 +35,24 @@
                 "BUILD_TESTING": "OFF",
                 "TRAFFICSIM_BUILD_VISUALIZER": "ON"
             }
+        },
+        {
+            "name": "benchmark",
+            "displayName": "Configuración de benchmarks Release",
+            "inherits": "base",
+            "cacheVariables": {
+                "BUILD_TESTING": "OFF",
+                "TRAFFICSIM_BUILD_BENCHMARKS": "ON"
+            }
+        },
+        {
+            "name": "benchmark-linux",
+            "displayName": "Configuración de benchmarks Linux Release",
+            "inherits": "benchmark",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
@@ -55,6 +73,17 @@
             "displayName": "Compilar visualizador SFML",
             "configurePreset": "visualizer",
             "configuration": "Debug"
+        },
+        {
+            "name": "benchmark",
+            "displayName": "Compilar benchmarks Release",
+            "configurePreset": "benchmark",
+            "configuration": "Release"
+        },
+        {
+            "name": "benchmark-linux",
+            "displayName": "Compilar benchmarks Linux Release",
+            "configurePreset": "benchmark-linux"
         }
     ],
     "testPresets": [

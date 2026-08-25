@@ -1,0 +1,61 @@
+name: Performance benchmarks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    name: Ubuntu Release benchmark
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Record environment
+        shell: bash
+        run: |
+          mkdir -p results/benchmarks
+          {
+            echo "commit=$(git rev-parse HEAD)"
+            echo "utc_date=$(date --utc --iso-8601=seconds)"
+            uname -a
+            lscpu
+            free -h
+            cmake --version
+            ninja --version
+            c++ --version
+          } > results/benchmarks/environment.txt
+
+      - name: Configure Release benchmarks
+        run: cmake --preset benchmark-linux
+
+      - name: Build Release benchmarks
+        run: cmake --build --preset benchmark-linux --parallel 2
+
+      - name: Run smoke benchmark
+        run: |
+          ./out/build/benchmark-linux/trafficsim_benchmarks \
+            results/benchmarks/benchmark_smoke.csv \
+            --quick
+
+      - name: Run full benchmark
+        shell: bash
+        run: |
+          /usr/bin/time -v \
+            -o results/benchmarks/process_metrics.txt \
+            ./out/build/benchmark-linux/trafficsim_benchmarks \
+            results/benchmarks/benchmark_samples.csv
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traffic-sim-benchmark-results
+          path: results/benchmarks/
+          if-no-files-found: warn
+          retention-days: 30
