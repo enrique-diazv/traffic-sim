@@ -30,4 +30,5 @@ Thumbs.db
 .DS_Store
 
 # Generated simulation results
-/results/*.csv
+/results/*
+!/results/.gitkeep

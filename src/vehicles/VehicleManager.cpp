@@ -63,7 +63,9 @@ VehicleManager::VehicleManager(std::size_t maximumVehicles, VehicleFollowingConf
 
 void VehicleManager::addVehicle(Vehicle vehicle)
 {
-    if (hasVehicle(vehicle.id()))
+    const auto vehicleId = vehicle.id();
+
+    if (vehicleIndexById_.contains(vehicleId))
     {
         throw std::invalid_argument{"Vehicle manager already contains the vehicle identifier"};
     }
@@ -73,39 +75,52 @@ void VehicleManager::addVehicle(Vehicle vehicle)
         throw std::length_error{"Vehicle manager has reached its capacity"};
     }
 
-    vehicles_.push_back(std::move(vehicle));
+    const auto vehicleIndex = vehicles_.size();
+    const auto [indexIterator, inserted] = vehicleIndexById_.emplace(vehicleId, vehicleIndex);
+
+    if (!inserted)
+    {
+        throw std::logic_error{"Vehicle identifier index became inconsistent"};
+    }
+
+    try
+    {
+        vehicles_.push_back(std::move(vehicle));
+    }
+    catch (...)
+    {
+        vehicleIndexById_.erase(indexIterator);
+        throw;
+    }
 }
 
 bool VehicleManager::hasVehicle(VehicleId vehicleId) const noexcept
 {
-    return std::ranges::any_of(vehicles_, [vehicleId](const Vehicle &vehicle)
-                               { return vehicle.id() == vehicleId; });
+    return vehicleIndexById_.contains(vehicleId);
 }
 
 Vehicle &VehicleManager::getVehicle(VehicleId vehicleId)
 {
-    const auto vehicle = std::ranges::find_if(vehicles_, [vehicleId](const Vehicle &candidate)
-                                              { return candidate.id() == vehicleId; });
+    const auto vehicleIndex = vehicleIndexById_.find(vehicleId);
 
-    if (vehicle == vehicles_.end())
+    if (vehicleIndex == vehicleIndexById_.end())
     {
         throw std::out_of_range{"Vehicle identifier was not found"};
     }
 
-    return *vehicle;
+    return vehicles_[vehicleIndex->second];
 }
 
 const Vehicle &VehicleManager::getVehicle(VehicleId vehicleId) const
 {
-    const auto vehicle = std::ranges::find_if(vehicles_, [vehicleId](const Vehicle &candidate)
-                                              { return candidate.id() == vehicleId; });
+    const auto vehicleIndex = vehicleIndexById_.find(vehicleId);
 
-    if (vehicle == vehicles_.end())
+    if (vehicleIndex == vehicleIndexById_.end())
     {
         throw std::out_of_range{"Vehicle identifier was not found"};
     }
 
-    return *vehicle;
+    return vehicles_[vehicleIndex->second];
 }
 
 std::span<const Vehicle> VehicleManager::vehicles() const noexcept
@@ -178,13 +193,41 @@ void VehicleManager::update(double deltaSeconds, const RoadNetwork &network,
 
 std::size_t VehicleManager::removeArrived()
 {
-    return std::erase_if(vehicles_, [](const Vehicle &vehicle)
-                         { return vehicle.state() == VehicleState::Arrived; });
+    for (const auto &vehicle : vehicles_)
+    {
+        if (vehicle.state() == VehicleState::Arrived)
+        {
+            vehicleIndexById_.erase(vehicle.id());
+        }
+    }
+
+    const auto removedCount = std::erase_if(vehicles_, [](const Vehicle &vehicle)
+                                            { return vehicle.state() == VehicleState::Arrived; });
+
+    if (removedCount == 0U)
+    {
+        return 0U;
+    }
+
+    for (std::size_t index = 0U; index < vehicles_.size(); ++index)
+    {
+        const auto vehicleIndex = vehicleIndexById_.find(vehicles_[index].id());
+
+        if (vehicleIndex == vehicleIndexById_.end())
+        {
+            throw std::logic_error{"Vehicle identifier index became inconsistent"};
+        }
+
+        vehicleIndex->second = index;
+    }
+
+    return removedCount;
 }
 
 void VehicleManager::clear() noexcept
 {
     vehicles_.clear();
+    vehicleIndexById_.clear();
 }
 
 std::size_t VehicleManager::vehicleCount() const noexcept

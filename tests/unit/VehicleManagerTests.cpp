@@ -304,6 +304,7 @@ TEST(VehicleManagerTests, RemovesOnlyArrivedVehicles)
     EXPECT_FALSE(manager.hasVehicle(100));
     EXPECT_TRUE(manager.hasVehicle(200));
     ASSERT_EQ(manager.vehicleCount(), 1U);
+    EXPECT_EQ(manager.getVehicle(200).id(), 200U);
     EXPECT_EQ(manager.vehicles()[0].id(), 200U);
 }
 
@@ -319,6 +320,13 @@ TEST(VehicleManagerTests, ClearsVehiclesWithoutChangingCapacity)
     EXPECT_FALSE(manager.full());
     EXPECT_EQ(manager.vehicleCount(), 0U);
     EXPECT_EQ(manager.maximumVehicles(), 2U);
+    EXPECT_FALSE(manager.hasVehicle(100));
+    EXPECT_FALSE(manager.hasVehicle(200));
+
+    manager.addVehicle(makeVehicle(100));
+
+    EXPECT_TRUE(manager.hasVehicle(100));
+    EXPECT_EQ(manager.getVehicle(100).id(), 100U);
 }
 
 } // namespace

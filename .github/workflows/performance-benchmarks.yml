@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Record environment
         shell: bash
@@ -30,6 +30,15 @@ jobs:
             ninja --version
             c++ --version
           } > results/benchmarks/environment.txt
+
+      - name: Configure Debug tests
+        run: cmake --preset debug -G Ninja -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build Debug tests
+        run: cmake --build --preset debug --parallel 2
+
+      - name: Run Debug tests
+        run: ctest --preset debug
 
       - name: Configure Release benchmarks
         run: cmake --preset benchmark-linux
@@ -53,7 +62,7 @@ jobs:
 
       - name: Upload benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: traffic-sim-benchmark-results
           path: results/benchmarks/

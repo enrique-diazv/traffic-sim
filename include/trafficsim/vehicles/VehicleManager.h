@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <span>
+#include <unordered_map>
 #include <vector>
 
 namespace trafficsim
@@ -40,6 +41,7 @@ class VehicleManager final
 
   private:
     std::vector<Vehicle> vehicles_;
+    std::unordered_map<VehicleId, std::size_t> vehicleIndexById_;
     std::size_t maximumVehicles_;
     VehicleFollowingConfig followingConfig_;
 };
