@@ -2,12 +2,13 @@
 
 ## Estado del documento
 
-Este documento describe la arquitectura implementada hasta el Sprint 14. El
-motor, las aplicaciones, el visualizador, los experimentos y la infraestructura
-de rendimiento mencionados aquí existen actualmente en el repositorio.
+Este documento describe la arquitectura de TrafficSim 0.1.0, completada después
+de 16 sprints. El motor, las aplicaciones, el visualizador, los experimentos y
+la infraestructura de rendimiento mencionados aquí existen actualmente en el
+repositorio.
 
-El Sprint 15 solo mejora la documentación, los recursos visuales y la
-distribución del proyecto; no introduce nuevas reglas de simulación.
+El Sprint 15 completó la documentación, los recursos visuales y la distribución
+del proyecto sin introducir nuevas reglas de simulación.
 
 ## Objetivos arquitectónicos
 

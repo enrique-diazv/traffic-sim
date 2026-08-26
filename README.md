@@ -5,20 +5,15 @@
 ![CMake 3.28+](https://img.shields.io/badge/CMake-3.28%2B-064F8C?logo=cmake)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-TrafficSim es un motor determinista de simulación de tráfico desarrollado en
-C++20. Modela redes de carreteras dirigidas, vehículos, rutas, semáforos,
-congestión y estadísticas mediante una arquitectura modular y verificable.
+TrafficSim es un motor determinista de simulación de tráfico desarrollado en C++20. Modela redes de carreteras dirigidas, vehículos, rutas, semáforos, congestión y estadísticas mediante una arquitectura modular y verificable.
 
-El proyecto incluye una aplicación de consola, un visualizador interactivo
-desarrollado con SFML, carga de escenarios JSON, exportación de resultados CSV,
-experimentos por lotes y benchmarks reproducibles mediante GitHub Actions.
+El proyecto incluye una aplicación de consola, un visualizador interactivo desarrollado con SFML, carga de escenarios JSON, exportación de resultados CSV, experimentos por lotes y benchmarks reproducibles mediante GitHub Actions.
 
 ## Vista previa
 
 [![Red básica representada por el visualizador SFML de TrafficSim](docs/images/visualizer-overview.png)](docs/media/trafficsim-demo.mp4)
 
-El visualizador representa las carreteras, intersecciones, vehículos y estados
-de los semáforos utilizando exclusivamente el estado público del motor.
+El visualizador representa las carreteras, intersecciones, vehículos y estados de los semáforos utilizando exclusivamente el estado público del motor.
 
 Selecciona la imagen para abrir una demostración grabada de la simulación.
 
@@ -26,14 +21,11 @@ Selecciona la imagen para abrir una demostración grabada de la simulación.
 
 ![Aceleración de lotes paralelos con cuatro trabajadores](docs/images/batch-speedup.svg)
 
-Con 10,000 vehículos por simulación, el lote paralelo consiguió una aceleración
-observada de 2.89x frente al lote secuencial. La metodología, el entorno y las
-limitaciones de la comparación se explican en
-[la documentación de rendimiento](docs/performance.md).
+Con 10,000 vehículos por simulación, el lote paralelo consiguió una aceleración observada de 2.89x frente al lote secuencial. La metodología, el entorno y las limitaciones de la comparación se explican en [la documentación de rendimiento](docs/performance.md).
 
 ## Estado actual
 
-**Sprint 15 de 16: presentación y preparación para portafolio.**
+**Versión 0.1.0: 16 de 16 sprints completados.**
 
 Actualmente están implementados:
 
@@ -54,9 +46,17 @@ Actualmente están implementados:
 - Pruebas automatizadas con GoogleTest y CTest.
 - Formato y análisis estático mediante clang-format y clang-tidy.
 
-El motor principal permanece desacoplado de la visualización. La simulación
-puede ejecutarse desde consola, pruebas, benchmarks o experimentos sin depender
-de SFML.
+El motor principal permanece desacoplado de la visualización. La simulación puede ejecutarse desde consola, pruebas, benchmarks o experimentos sin depender de SFML.
+
+## Descargar una versión
+
+Los paquetes precompilados están disponibles en [GitHub Releases](https://github.com/enrique-diazv/traffic-sim/releases/latest).
+
+- Windows x64 incluye la aplicación de consola, el ejecutable de experimentos, el visualizador SFML, las DLL requeridas, los recursos y los escenarios.
+- Linux x64 incluye la aplicación de consola, el ejecutable de experimentos, los escenarios y el plan de experimento.
+- `SHA256SUMS.txt` permite verificar la integridad de cada paquete.
+
+También se puede compilar directamente desde el código fuente siguiendo las instrucciones siguientes.
 
 ## Requisitos
 
@@ -68,21 +68,16 @@ de SFML.
   - GCC.
   - Clang.
 - Git.
-- Conexión a Internet durante la primera configuración para descargar las
-  dependencias mediante CMake `FetchContent`.
+- Conexión a Internet durante la primera configuración para descargar las dependencias mediante CMake `FetchContent`.
 
-En Windows se recomienda Visual Studio Build Tools con el componente de
-desarrollo para escritorio con C++.
+En Windows se recomienda Visual Studio Build Tools con el componente de desarrollo para escritorio con C++.
 
 ### Herramientas opcionales
 
 - LLVM, para ejecutar clang-format y clang-tidy.
-- Ninja, para reproducir localmente la configuración de benchmarks utilizada
-  en Linux.
+- Ninja, para reproducir localmente la configuración de benchmarks utilizada en Linux.
 
-GoogleTest y nlohmann/json se descargan automáticamente al configurar los
-targets que los necesitan. SFML también se descarga automáticamente cuando se
-configura el visualizador.
+GoogleTest y nlohmann/json se descargan automáticamente al configurar los targets que los necesitan. SFML también se descarga automáticamente cuando se configura el visualizador.
 
 ## Configurar y compilar
 
@@ -93,9 +88,7 @@ cmake --preset debug
 cmake --build --preset debug
 ```
 
-La primera configuración descarga automáticamente las dependencias necesarias.
-Las configuraciones posteriores reutilizan las dependencias y los archivos
-generados dentro de `out/build/debug`.
+La primera configuración descarga automáticamente las dependencias necesarias. Las configuraciones posteriores reutilizan las dependencias y los archivos generados dentro de `out/build/debug`.
 
 ## Ejecutar la simulación
 
@@ -111,15 +104,13 @@ En Linux con un generador de configuración única:
 ./out/build/debug/trafficsim
 ```
 
-Sin argumentos, la aplicación carga `scenarios/basic.json`. También se puede
-indicar otro escenario:
+Sin argumentos, la aplicación carga `scenarios/basic.json`. También se puede indicar otro escenario:
 
 ```powershell
 .\out\build\debug\Debug\trafficsim.exe .\scenarios\basic.json
 ```
 
-Al finalizar, la aplicación muestra un resumen en la consola y exporta los
-resultados CSV dentro del directorio `results`.
+Al finalizar, la aplicación muestra un resumen en la consola y exporta los resultados CSV dentro del directorio `results`.
 
 ## Ejecutar las pruebas
 
@@ -129,13 +120,9 @@ Después de compilar la configuración Debug, ejecuta:
 ctest --preset debug
 ```
 
-El preset muestra automáticamente la salida de las pruebas que fallen. La suite
-actual contiene 201 pruebas unitarias y de integración para la red, las rutas,
-los vehículos, la simulación, los semáforos, la carga de escenarios, las
-estadísticas, los experimentos y la ejecución paralela por lotes.
+El preset muestra automáticamente la salida de las pruebas que fallen. La suite actual contiene 201 pruebas unitarias y de integración para la red, las rutas, los vehículos, la simulación, los semáforos, la carga de escenarios, las estadísticas, los experimentos y la ejecución paralela por lotes.
 
-Para ejecutar solamente un grupo de pruebas se puede utilizar una expresión
-regular de CTest. Por ejemplo:
+Para ejecutar solamente un grupo de pruebas se puede utilizar una expresión regular de CTest. Por ejemplo:
 
 ```powershell
 ctest --preset debug -R "VehicleTests"
@@ -163,8 +150,7 @@ clang-format -i $sourceFiles.FullName
 
 ## Ejecutar el análisis estático
 
-clang-tidy se puede ejecutar sobre un archivo de implementación utilizando las
-opciones de MSVC necesarias para C++20, excepciones y encabezados del proyecto:
+clang-tidy se puede ejecutar sobre un archivo de implementación utilizando las opciones de MSVC necesarias para C++20, excepciones y encabezados del proyecto:
 
 ```powershell
 clang-tidy .\src\core\Simulation.cpp `
@@ -175,14 +161,11 @@ clang-tidy .\src\core\Simulation.cpp `
     --
 ```
 
-Los mensajes que indican advertencias suprimidas en código externo son
-informativos. Se deben corregir las advertencias que señalen archivos dentro de
-`include`, `src`, `tests` o `benchmarks`.
+Los mensajes que indican advertencias suprimidas en código externo son informativos. Se deben corregir las advertencias que señalen archivos dentro de `include`, `src`, `tests` o `benchmarks`.
 
 ## Compilar una versión Release
 
-La configuración Release compila la aplicación de consola y el ejecutable de
-experimentos sin incluir las pruebas:
+La configuración Release compila la aplicación de consola y el ejecutable de experimentos sin incluir las pruebas:
 
 ```powershell
 cmake --preset release
@@ -197,21 +180,18 @@ Para ejecutar la simulación optimizada en Windows:
 
 ## Ejecutar experimentos por lotes
 
-El ejecutable de experimentos carga un plan JSON, genera sus variantes, realiza
-las repeticiones configuradas y exporta los resultados agregados:
+El ejecutable de experimentos carga un plan JSON, genera sus variantes, realiza las repeticiones configuradas y exporta los resultados agregados:
 
 ```powershell
 .\out\build\release\Release\trafficsim_experiments.exe `
     .\experiments\basic_sweep.json
 ```
 
-Sin argumentos utiliza `experiments/basic_sweep.json`. Las rutas del escenario
-y del directorio de resultados se definen dentro del propio plan.
+Sin argumentos utiliza `experiments/basic_sweep.json`. Las rutas del escenario y del directorio de resultados se definen dentro del propio plan.
 
 ## Compilar y ejecutar el visualizador
 
-El visualizador es opcional y utiliza SFML 3.1. CMake descarga SFML y copia
-automáticamente el escenario básico y la fuente requerida junto al ejecutable:
+El visualizador es opcional y utiliza SFML 3.1. CMake descarga SFML y copia automáticamente el escenario básico y la fuente requerida junto al ejecutable:
 
 ```powershell
 cmake --preset visualizer
@@ -289,9 +269,7 @@ traffic-sim/
 └── README.md
 ```
 
-Los encabezados públicos se encuentran en `include/trafficsim` y sus
-implementaciones en `src`. Las aplicaciones dependen de `trafficsim_core`,
-mientras que el motor no depende de la consola ni del visualizador.
+Los encabezados públicos se encuentran en `include/trafficsim` y sus implementaciones en `src`. Las aplicaciones dependen de `trafficsim_core`, mientras que el motor no depende de la consola ni del visualizador.
 
 ## Escenarios de ejemplo
 
@@ -300,8 +278,7 @@ mientras que el motor no depende de la consola ni del visualizador.
 | [Básico](scenarios/basic.json) | Red lineal de tres intersecciones con un semáforo y tres vehículos |
 | [Rutas alternativas](scenarios/alternate_routes.json) | Red en forma de diamante con dos rutas, capacidades diferentes y ocho vehículos |
 
-El escenario de rutas alternativas genera congestión medible y permite observar
-cómo el costo de las rutas influye en la distribución del tráfico.
+El escenario de rutas alternativas genera congestión medible y permite observar cómo el costo de las rutas influye en la distribución del tráfico.
 
 ## Documentación técnica
 
@@ -328,18 +305,13 @@ cómo el costo de las rutas influye en la distribución del tráfico.
 | 12 | Experimentos parametrizados por lotes | Completado |
 | 13 | Benchmarks y optimización basada en mediciones | Completado |
 | 14 | Concurrencia limitada a simulaciones independientes | Completado |
-| 15 | Documentación visual y publicación para portafolio | En progreso |
+| 15 | Documentación visual y publicación para portafolio | Completado |
 
-El Sprint 15 se limita a presentación y distribución: capturas, diagramas,
-gráficas de rendimiento, escenarios de ejemplo, badges de integración continua
-y una versión Release. No agregará nuevas reglas al motor de simulación.
+El Sprint 15 completó la presentación y distribución mediante capturas, diagramas, una demostración grabada, gráficas de rendimiento, escenarios de ejemplo, integración continua y paquetes Release reproducibles. No agregó nuevas reglas al motor de simulación.
 
 ## Alcance
 
-TrafficSim se concentra en simulación determinista de tráfico sobre redes
-dirigidas. Permanecen fuera del alcance actual la física realista de colisiones,
-cambios de carril, peatones, transporte público, mapas reales, simulación 3D y
-procesamiento distribuido.
+TrafficSim se concentra en simulación determinista de tráfico sobre redes dirigidas. Permanecen fuera del alcance actual la física realista de colisiones, cambios de carril, peatones, transporte público, mapas reales, simulación 3D y procesamiento distribuido.
 
 ## Licencia
 
