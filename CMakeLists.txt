@@ -72,6 +72,12 @@ configure_file(
 	COPYONLY
 )
 
+configure_file(
+	"${PROJECT_SOURCE_DIR}/scenarios/alternate_routes.json"
+	"${PROJECT_BINARY_DIR}/scenarios/alternate_routes.json"
+	COPYONLY
+)
+
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/experiments")
 
 configure_file(
@@ -213,6 +219,9 @@ if(TRAFFICSIM_BUILD_VISUALIZER)
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			"${PROJECT_SOURCE_DIR}/scenarios/basic.json"
 			"$<TARGET_FILE_DIR:trafficsim_visualizer>/scenarios/basic.json"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${PROJECT_SOURCE_DIR}/scenarios/alternate_routes.json"
+			"$<TARGET_FILE_DIR:trafficsim_visualizer>/scenarios/alternate_routes.json"
 		VERBATIM
 	)
 endif()

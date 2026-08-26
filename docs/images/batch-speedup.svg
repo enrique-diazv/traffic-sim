@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title description">
+  <title id="title">Aceleración de lotes paralelos en TrafficSim</title>
+  <desc id="description">
+    Comparación de la aceleración obtenida al ejecutar ocho simulaciones con
+    cuatro trabajadores. La aceleración aumenta desde 2.00 veces con 100
+    vehículos hasta 2.89 veces con 10000 vehículos.
+  </desc>
+
+  <rect width="1200" height="680" fill="#111827"></rect>
+
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <text x="40" y="58" fill="#f8fafc" font-size="32" font-weight="600">
+      Aceleración de lotes paralelos
+    </text>
+    <text x="40" y="92" fill="#94a3b8" font-size="18">
+      Ocho simulaciones independientes · cuatro trabajadores
+    </text>
+
+    <g stroke="#334155" stroke-width="1">
+      <line x1="260" y1="145" x2="260" y2="555"></line>
+      <line x1="516" y1="145" x2="516" y2="555"></line>
+      <line x1="772" y1="145" x2="772" y2="555"></line>
+      <line x1="1029" y1="145" x2="1029" y2="555"></line>
+    </g>
+
+    <g fill="#94a3b8" font-size="15" text-anchor="middle">
+      <text x="260" y="135">0x</text>
+      <text x="516" y="135">1x</text>
+      <text x="772" y="135">2x</text>
+      <text x="1029" y="135">3x</text>
+    </g>
+
+    <line x1="516" y1="145" x2="516" y2="555" stroke="#22c55e" stroke-width="2" stroke-dasharray="7 7"></line>
+    <text x="526" y="170" fill="#86efac" font-size="14">
+      rendimiento secuencial
+    </text>
+
+    <g fill="#1e293b">
+      <rect x="260" y="190" width="820" height="42" rx="5"></rect>
+      <rect x="260" y="290" width="820" height="42" rx="5"></rect>
+      <rect x="260" y="390" width="820" height="42" rx="5"></rect>
+      <rect x="260" y="490" width="820" height="42" rx="5"></rect>
+    </g>
+
+    <g fill="#38bdf8">
+      <rect x="260" y="190" width="513" height="42" rx="5"></rect>
+      <rect x="260" y="290" width="715" height="42" rx="5"></rect>
+      <rect x="260" y="390" width="712" height="42" rx="5"></rect>
+    </g>
+    <rect x="260" y="490" width="741" height="42" rx="5" fill="#f59e0b"></rect>
+
+    <g fill="#e2e8f0" font-size="18" font-weight="600">
+      <text x="40" y="218">100 vehículos</text>
+      <text x="40" y="318">1,000 vehículos</text>
+      <text x="40" y="418">5,000 vehículos</text>
+      <text x="40" y="518">10,000 vehículos</text>
+    </g>
+
+    <g fill="#f8fafc" font-size="18" font-weight="600">
+      <text x="785" y="218">2.00x</text>
+      <text x="987" y="318">2.79x</text>
+      <text x="984" y="418">2.78x</text>
+      <text x="1013" y="518">2.89x</text>
+    </g>
+
+    <g fill="#94a3b8" font-size="15">
+      <text x="40" y="252">6.67 ms secuencial → 3.33 ms paralelo</text>
+      <text x="40" y="352">85.17 ms secuencial → 30.53 ms paralelo</text>
+      <text x="40" y="452">486.94 ms secuencial → 175.22 ms paralelo</text>
+      <text x="40" y="552">1,039.45 ms secuencial → 359.42 ms paralelo</text>
+    </g>
+
+    <line x1="40" y1="592" x2="1160" y2="592" stroke="#334155"></line>
+
+    <text x="40" y="628" fill="#94a3b8" font-size="16">
+      GitHub Actions · AMD EPYC 7763 · GCC 13.3.0 · Release
+    </text>
+    <text x="40" y="654" fill="#64748b" font-size="14">
+      Resultados controlados del commit 4e5b3b425688c0e839fad55a8f931c9728b78663
+    </text>
+  </g>
+</svg>
