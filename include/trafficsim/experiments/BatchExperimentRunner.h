@@ -27,6 +27,9 @@ class BatchExperimentRunner final
   public:
     [[nodiscard]] static std::vector<ExperimentRunResult> run(const Scenario &baseScenario,
                                                               const BatchExperimentConfig &config);
+    [[nodiscard]] static std::vector<ExperimentRunResult>
+    runParallel(const Scenario &baseScenario, const BatchExperimentConfig &config,
+                std::size_t workerCount);
 };
 
 } // namespace trafficsim

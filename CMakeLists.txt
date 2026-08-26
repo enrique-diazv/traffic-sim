@@ -7,6 +7,7 @@ project(TrafficSim
 )
 
 include(FetchContent)
+find_package(Threads REQUIRED)
 
 option(TRAFFICSIM_BUILD_VISUALIZER
 	"Build the optional SFML visualization frontend."
@@ -128,7 +129,9 @@ target_include_directories(trafficsim_core
 )
 
 target_link_libraries(trafficsim_core
-	PRIVATE nlohmann_json::nlohmann_json
+	PRIVATE
+		nlohmann_json::nlohmann_json
+		Threads::Threads
 )
 
 target_compile_features(trafficsim_core PUBLIC cxx_std_20)

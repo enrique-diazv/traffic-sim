@@ -116,6 +116,54 @@ TEST(BatchExperimentRunnerTests, RunsEveryVariantAndRepetitionInDeterministicOrd
     }
 }
 
+TEST(BatchExperimentRunnerTests, ParallelRunMatchesSequentialResultsAndOrder)
+{
+    const auto scenario = createScenario();
+    const auto config = createExperimentConfig(scenario);
+
+    const auto sequentialResults = BatchExperimentRunner::run(scenario, config);
+    const auto parallelResults = BatchExperimentRunner::runParallel(scenario, config, 3U);
+
+    ASSERT_EQ(parallelResults.size(), sequentialResults.size());
+
+    for (std::size_t index = 0U; index < sequentialResults.size(); ++index)
+    {
+        const auto &sequential = sequentialResults[index];
+        const auto &parallel = parallelResults[index];
+
+        EXPECT_EQ(parallel.variantName, sequential.variantName);
+        EXPECT_EQ(parallel.repetitionIndex, sequential.repetitionIndex);
+        EXPECT_EQ(parallel.randomSeed, sequential.randomSeed);
+        EXPECT_EQ(parallel.totalReroutes, sequential.totalReroutes);
+        EXPECT_EQ(parallel.summary.vehiclesSpawned, sequential.summary.vehiclesSpawned);
+        EXPECT_EQ(parallel.summary.vehiclesArrived, sequential.summary.vehiclesArrived);
+        EXPECT_DOUBLE_EQ(parallel.summary.averageTravelTimeSeconds,
+                         sequential.summary.averageTravelTimeSeconds);
+        EXPECT_DOUBLE_EQ(parallel.summary.minimumTravelTimeSeconds,
+                         sequential.summary.minimumTravelTimeSeconds);
+        EXPECT_DOUBLE_EQ(parallel.summary.maximumTravelTimeSeconds,
+                         sequential.summary.maximumTravelTimeSeconds);
+        EXPECT_DOUBLE_EQ(parallel.summary.averageWaitingTimeSeconds,
+                         sequential.summary.averageWaitingTimeSeconds);
+        EXPECT_DOUBLE_EQ(parallel.summary.averageSpeedMetersPerSecond,
+                         sequential.summary.averageSpeedMetersPerSecond);
+        EXPECT_DOUBLE_EQ(parallel.summary.totalDistanceMeters,
+                         sequential.summary.totalDistanceMeters);
+        EXPECT_DOUBLE_EQ(parallel.summary.averageRouteLengthMeters,
+                         sequential.summary.averageRouteLengthMeters);
+        EXPECT_EQ(parallel.summary.peakActiveVehicles, sequential.summary.peakActiveVehicles);
+    }
+}
+
+TEST(BatchExperimentRunnerTests, RejectsZeroParallelWorkers)
+{
+    const auto scenario = createScenario();
+    const auto config = createExperimentConfig(scenario);
+
+    EXPECT_THROW(static_cast<void>(BatchExperimentRunner::runParallel(scenario, config, 0U)),
+                 std::invalid_argument);
+}
+
 TEST(BatchExperimentRunnerTests, ReproducesResultsForIdenticalInput)
 {
     const auto scenario = createScenario();
