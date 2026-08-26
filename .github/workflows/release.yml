@@ -1,0 +1,126 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Package Windows x64
+    runs-on: windows-2025
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure visualizer Release
+        run: cmake --preset visualizer
+
+      - name: Build visualizer Release
+        run: cmake --build out/build/visualizer --config Release --parallel 2
+
+      - name: Package Windows binaries
+        shell: pwsh
+        run: |
+          $package = "dist/traffic-sim-${{ github.ref_name }}-windows-x64"
+          $buildOutput = "out/build/visualizer/Release"
+
+          New-Item -ItemType Directory -Force -Path $package | Out-Null
+
+          Get-ChildItem -LiteralPath $buildOutput -File |
+            Where-Object { $_.Extension -in ".exe", ".dll" } |
+            Copy-Item -Destination $package
+
+          Copy-Item -Recurse -LiteralPath assets -Destination "$package/assets"
+          Copy-Item -Recurse -LiteralPath scenarios -Destination "$package/scenarios"
+          Copy-Item -Recurse -LiteralPath experiments -Destination "$package/experiments"
+          Copy-Item -LiteralPath README.md, LICENSE -Destination $package
+
+          Compress-Archive `
+            -LiteralPath $package `
+            -DestinationPath "$package.zip"
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v7
+        with:
+          name: traffic-sim-${{ github.ref_name }}-windows-x64
+          path: dist/traffic-sim-${{ github.ref_name }}-windows-x64.zip
+          if-no-files-found: error
+
+  linux:
+    name: Package Linux x64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Release
+        run: cmake --preset release -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Release
+        run: cmake --build --preset release --parallel 2
+
+      - name: Package Linux binaries
+        shell: bash
+        run: |
+          package="dist/traffic-sim-${{ github.ref_name }}-linux-x64"
+
+          mkdir -p "$package/scenarios" "$package/experiments"
+          cp out/build/release/trafficsim "$package/"
+          cp out/build/release/trafficsim_experiments "$package/"
+          cp scenarios/*.json "$package/scenarios/"
+          cp experiments/*.json "$package/experiments/"
+          cp README.md LICENSE "$package/"
+
+          tar \
+            -C dist \
+            -czf "${package}.tar.gz" \
+            "traffic-sim-${{ github.ref_name }}-linux-x64"
+
+      - name: Upload Linux package
+        uses: actions/upload-artifact@v7
+        with:
+          name: traffic-sim-${{ github.ref_name }}-linux-x64
+          path: dist/traffic-sim-${{ github.ref_name }}-linux-x64.tar.gz
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - windows
+      - linux
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: traffic-sim-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create checksums
+        shell: bash
+        run: |
+          cd release-assets
+          sha256sum * > SHA256SUMS.txt
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            release-assets/* \
+            --title "TrafficSim ${{ github.ref_name }}" \
+            --generate-notes

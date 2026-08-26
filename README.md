@@ -3,6 +3,7 @@
 [![CI](https://github.com/enrique-diazv/traffic-sim/actions/workflows/ci.yml/badge.svg)](https://github.com/enrique-diazv/traffic-sim/actions/workflows/ci.yml)
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=c%2B%2B)
 ![CMake 3.28+](https://img.shields.io/badge/CMake-3.28%2B-064F8C?logo=cmake)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 TrafficSim es un motor determinista de simulación de tráfico desarrollado en
 C++20. Modela redes de carreteras dirigidas, vehículos, rutas, semáforos,
@@ -339,3 +340,7 @@ TrafficSim se concentra en simulación determinista de tráfico sobre redes
 dirigidas. Permanecen fuera del alcance actual la física realista de colisiones,
 cambios de carril, peatones, transporte público, mapas reales, simulación 3D y
 procesamiento distribuido.
+
+## Licencia
+
+TrafficSim se distribuye bajo la [licencia MIT](LICENSE).
