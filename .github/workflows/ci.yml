@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu GCC
+            os: ubuntu-24.04
+          - name: Windows MSVC
+            os: windows-2025
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Debug
+        run: cmake --preset debug
+
+      - name: Build Debug
+        run: cmake --build --preset debug --parallel 2
+
+      - name: Run tests
+        run: ctest --preset debug
+
+      - name: Configure Release
+        run: cmake --preset release
+
+      - name: Build Release
+        run: cmake --build --preset release --parallel 2
