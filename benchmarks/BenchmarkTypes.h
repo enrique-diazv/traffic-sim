@@ -16,6 +16,8 @@ enum class BenchmarkKind : std::uint8_t
     VehicleUpdate,
     Statistics,
     FullSimulation,
+    BatchSequential,
+    BatchParallel,
 };
 
 struct BenchmarkConfig
@@ -30,6 +32,8 @@ struct BenchmarkConfig
     std::size_t repetitions{3U};
     std::size_t roadLookupOperationsPerVehicle{100U};
     std::size_t vehicleUpdateSteps{10U};
+    std::size_t batchRunCount{8U};
+    std::size_t parallelWorkerCount{4U};
     double simulationTimeStepSeconds{0.1};
     double fullSimulationDurationSeconds{5.0};
 

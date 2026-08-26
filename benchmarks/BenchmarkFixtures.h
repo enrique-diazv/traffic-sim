@@ -2,6 +2,8 @@
 #define TRAFFICSIM_BENCHMARKS_BENCHMARK_FIXTURES_H
 
 #include "trafficsim/core/Simulation.h"
+#include "trafficsim/experiments/BatchExperimentConfig.h"
+#include "trafficsim/io/Scenario.h"
 #include "trafficsim/network/RoadNetwork.h"
 #include "trafficsim/traffic/RoadTrafficMetrics.h"
 #include "trafficsim/vehicles/VehicleManager.h"
@@ -18,6 +20,12 @@ namespace trafficsim::benchmarking
                                                   const RoadNetwork &network);
 
 [[nodiscard]] std::vector<RoadTrafficMetrics> createRoadMetrics(std::size_t metricCount);
+
+[[nodiscard]] Scenario createBenchmarkScenario(std::size_t vehicleCount, double timeStepSeconds,
+                                               double durationSeconds);
+
+[[nodiscard]] BatchExperimentConfig createBatchExperimentConfig(const Scenario &scenario,
+                                                                std::size_t runCount);
 
 [[nodiscard]] Simulation createSimulation(std::size_t vehicleCount, double timeStepSeconds,
                                           double durationSeconds);

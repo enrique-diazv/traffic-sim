@@ -16,6 +16,8 @@ trafficsim::benchmarking::BenchmarkConfig quickConfig()
     config.repetitions = 1U;
     config.roadLookupOperationsPerVehicle = 10U;
     config.vehicleUpdateSteps = 2U;
+    config.batchRunCount = 4U;
+    config.parallelWorkerCount = 2U;
     config.fullSimulationDurationSeconds = 1.0;
     return config;
 }

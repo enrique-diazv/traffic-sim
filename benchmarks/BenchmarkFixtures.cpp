@@ -130,8 +130,8 @@ std::vector<RoadTrafficMetrics> createRoadMetrics(std::size_t metricCount)
     return metrics;
 }
 
-Simulation createSimulation(std::size_t vehicleCount, double timeStepSeconds,
-                            double durationSeconds)
+Scenario createBenchmarkScenario(std::size_t vehicleCount, double timeStepSeconds,
+                                 double durationSeconds)
 {
     if (vehicleCount == 0U)
     {
@@ -164,10 +164,44 @@ Simulation createSimulation(std::size_t vehicleCount, double timeStepSeconds,
         });
     }
 
+    return Scenario{
+        .config = config,
+        .roadNetwork = std::move(network),
+        .trafficManager = {},
+        .spawnSchedule = std::move(schedule),
+    };
+}
+
+BatchExperimentConfig createBatchExperimentConfig(const Scenario &scenario, std::size_t runCount)
+{
+    if (runCount == 0U)
+    {
+        throw std::invalid_argument{"Benchmark batch run count must be positive"};
+    }
+
+    return {
+        .repetitions = runCount,
+        .seedStride = 1U,
+        .variants =
+            {
+                ExperimentVariant{
+                    .name = "benchmark",
+                    .simulationConfig = scenario.config,
+                },
+            },
+    };
+}
+
+Simulation createSimulation(std::size_t vehicleCount, double timeStepSeconds,
+                            double durationSeconds)
+{
+    auto scenario = createBenchmarkScenario(vehicleCount, timeStepSeconds, durationSeconds);
+
     return Simulation{
-        config,
-        std::move(network),
-        std::move(schedule),
+        scenario.config,
+        std::move(scenario.roadNetwork),
+        std::move(scenario.spawnSchedule),
+        std::move(scenario.trafficManager),
     };
 }
 

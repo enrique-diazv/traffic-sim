@@ -3,6 +3,7 @@
 #include "BenchmarkFixtures.h"
 #include "BenchmarkTimer.h"
 
+#include "trafficsim/experiments/BatchExperimentRunner.h"
 #include "trafficsim/routing/DijkstraRoutePlanner.h"
 #include "trafficsim/statistics/StatisticsCollector.h"
 
@@ -222,6 +223,65 @@ BenchmarkSample benchmarkFullSimulation(const BenchmarkConfig &config, std::size
         timing);
 }
 
+std::size_t calculateBatchOperationCount(const BenchmarkConfig &config, std::size_t vehicleCount)
+{
+    const auto stepCount = static_cast<std::size_t>(
+        std::ceil(config.fullSimulationDurationSeconds / config.simulationTimeStepSeconds));
+
+    if (vehicleCount > std::numeric_limits<std::size_t>::max() / stepCount)
+    {
+        throw std::overflow_error{
+            "Batch benchmark operation count overflow",
+        };
+    }
+
+    const auto operationsPerRun = vehicleCount * stepCount;
+
+    if (operationsPerRun > std::numeric_limits<std::size_t>::max() / config.batchRunCount)
+    {
+        throw std::overflow_error{
+            "Batch benchmark operation count overflow",
+        };
+    }
+
+    return operationsPerRun * config.batchRunCount;
+}
+
+BenchmarkSample benchmarkBatch(const BenchmarkConfig &config, std::size_t vehicleCount,
+                               std::size_t repetitionIndex, BenchmarkKind kind)
+{
+    if (kind != BenchmarkKind::BatchSequential && kind != BenchmarkKind::BatchParallel)
+    {
+        throw std::invalid_argument{"Invalid batch benchmark kind"};
+    }
+
+    const auto scenario = createBenchmarkScenario(vehicleCount, config.simulationTimeStepSeconds,
+                                                  config.fullSimulationDurationSeconds);
+    const auto batchConfig = createBatchExperimentConfig(scenario, config.batchRunCount);
+
+    const auto timing = BenchmarkTimer::measure(
+        [&config, &scenario, &batchConfig, kind]()
+        {
+            const auto results = kind == BenchmarkKind::BatchParallel
+                                     ? BatchExperimentRunner::runParallel(
+                                           scenario, batchConfig, config.parallelWorkerCount)
+                                     : BatchExperimentRunner::run(scenario, batchConfig);
+
+            benchmarkSink.store(results.size(), std::memory_order_relaxed);
+        });
+
+    return makeSample(
+        SampleDescriptor{
+            .kind = kind,
+            .vehicleCount = vehicleCount,
+            .repetitionIndex = repetitionIndex,
+            .operationCount = calculateBatchOperationCount(config, vehicleCount),
+            .simulatedSeconds =
+                config.fullSimulationDurationSeconds * static_cast<double>(config.batchRunCount),
+        },
+        timing);
+}
+
 } // namespace
 
 std::vector<BenchmarkSample> PerformanceBenchmarkRunner::run(const BenchmarkConfig &config,
@@ -229,7 +289,7 @@ std::vector<BenchmarkSample> PerformanceBenchmarkRunner::run(const BenchmarkConf
 {
     config.validate();
 
-    constexpr std::size_t benchmarkKindCount{5U};
+    constexpr std::size_t benchmarkKindCount{7U};
 
     if (config.vehicleCounts.size() >
         std::numeric_limits<std::size_t>::max() / config.repetitions / benchmarkKindCount)
@@ -295,6 +355,31 @@ std::vector<BenchmarkSample> PerformanceBenchmarkRunner::run(const BenchmarkConf
             };
             writeProgress(progressOutput, fullSimulationDescriptor);
             samples.push_back(benchmarkFullSimulation(config, vehicleCount, repetitionIndex));
+            const auto batchOperationCount = calculateBatchOperationCount(config, vehicleCount);
+            const auto batchSimulatedSeconds =
+                config.fullSimulationDurationSeconds * static_cast<double>(config.batchRunCount);
+
+            const SampleDescriptor sequentialBatchDescriptor{
+                .kind = BenchmarkKind::BatchSequential,
+                .vehicleCount = vehicleCount,
+                .repetitionIndex = repetitionIndex,
+                .operationCount = batchOperationCount,
+                .simulatedSeconds = batchSimulatedSeconds,
+            };
+            writeProgress(progressOutput, sequentialBatchDescriptor);
+            samples.push_back(benchmarkBatch(config, vehicleCount, repetitionIndex,
+                                             BenchmarkKind::BatchSequential));
+
+            const SampleDescriptor parallelBatchDescriptor{
+                .kind = BenchmarkKind::BatchParallel,
+                .vehicleCount = vehicleCount,
+                .repetitionIndex = repetitionIndex,
+                .operationCount = batchOperationCount,
+                .simulatedSeconds = batchSimulatedSeconds,
+            };
+            writeProgress(progressOutput, parallelBatchDescriptor);
+            samples.push_back(benchmarkBatch(config, vehicleCount, repetitionIndex,
+                                             BenchmarkKind::BatchParallel));
         }
     }
 

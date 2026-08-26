@@ -14,7 +14,8 @@ void BenchmarkConfig::validate() const
         throw std::invalid_argument{"Benchmark vehicle counts must not be empty"};
     }
 
-    if (repetitions == 0U || roadLookupOperationsPerVehicle == 0U || vehicleUpdateSteps == 0U)
+    if (repetitions == 0U || roadLookupOperationsPerVehicle == 0U || vehicleUpdateSteps == 0U ||
+        batchRunCount == 0U || parallelWorkerCount == 0U)
     {
         throw std::invalid_argument{"Benchmark operation counts must be positive"};
     }
@@ -74,6 +75,10 @@ std::string_view benchmarkName(BenchmarkKind kind)
         return "statistics";
     case BenchmarkKind::FullSimulation:
         return "full_simulation";
+    case BenchmarkKind::BatchSequential:
+        return "batch_sequential";
+    case BenchmarkKind::BatchParallel:
+        return "batch_parallel";
     }
 
     throw std::invalid_argument{"Unknown benchmark kind"};
